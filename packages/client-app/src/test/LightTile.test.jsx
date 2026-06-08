@@ -407,7 +407,7 @@ describe("LightTile", () => {
     ).not.toBeInTheDocument();
   });
 
-  it("clicking Save to favourites calls onAddFavourite with hs type and current draft values", () => {
+  it("clicking Save to favourites opens inline name input", () => {
     const onAdd = vi.fn();
     render(<LightTile entity={HS_ON} onAddFavourite={onAdd} />);
     fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
@@ -415,6 +415,21 @@ describe("LightTile", () => {
     fireEvent.click(
       screen.getByRole("button", { name: "Save colour to favourites" }),
     );
+    expect(
+      screen.getByRole("textbox", { name: "Colour name" }),
+    ).toBeInTheDocument();
+    expect(onAdd).not.toHaveBeenCalled();
+  });
+
+  it("confirming name input calls onAddFavourite with hs type and current draft values", () => {
+    const onAdd = vi.fn();
+    render(<LightTile entity={HS_ON} onAddFavourite={onAdd} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom colour" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Save colour to favourites" }),
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Confirm save" }));
     expect(onAdd).toHaveBeenCalledWith(
       expect.objectContaining({ type: "hs", value: expect.any(Array) }),
     );

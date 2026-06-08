@@ -35,14 +35,14 @@ function resolveMode(modes, brightnessPct) {
   return "onoff";
 }
 
-function isSwatchActive(swatch, hsColor, colorTempKelvin, mode) {
-  if (swatch.colorTemp && mode !== "hs" && colorTempKelvin != null) {
-    return Math.abs(colorTempKelvin - swatch.colorTemp) <= 100;
+function isSwatchActive(swatch, hsCol, tempK, mode) {
+  if (swatch.colorTemp && mode !== "hs" && tempK != null) {
+    return Math.abs(tempK - swatch.colorTemp) <= 100;
   }
-  if (hsColor) {
+  if (hsCol) {
     return (
-      Math.abs(hsColor[0] - swatch.hs[0]) <= 5 &&
-      Math.abs(hsColor[1] - swatch.hs[1]) <= 5
+      Math.abs(hsCol[0] - swatch.hs[0]) <= 5 &&
+      Math.abs(hsCol[1] - swatch.hs[1]) <= 5
     );
   }
   return false;
@@ -54,10 +54,10 @@ function cardGlow(isOn, pct) {
   return `radial-gradient(ellipse 180% 150% at 50% 115%, rgba(255,185,75,${a}) 0%, #1a1a1a 60%)`;
 }
 
-function resolveColour(hsColor, colorTempKelvin) {
-  if (hsColor) return `hsl(${hsColor[0]},${hsColor[1]}%,55%)`;
-  if (colorTempKelvin) {
-    const t = Math.max(0, Math.min(1, (colorTempKelvin - 2000) / 4500));
+function resolveColour(hsCol, tempK) {
+  if (hsCol) return `hsl(${hsCol[0]},${hsCol[1]}%,55%)`;
+  if (tempK) {
+    const t = Math.max(0, Math.min(1, (tempK - 2000) / 4500));
     const r = Math.round(255 + (204 - 255) * t);
     const g = Math.round(140 + (224 - 140) * t);
     const b = Math.round(58 + (255 - 58) * t);
@@ -66,7 +66,6 @@ function resolveColour(hsColor, colorTempKelvin) {
   return "#fff8e7";
 }
 
-// 24px track — hue and saturation sliders.
 const colourSlider =
   "w-full h-6 rounded-full cursor-pointer appearance-none " +
   "[&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:h-6 " +
@@ -78,7 +77,6 @@ const colourSlider =
   "[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white " +
   "[&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-md";
 
-// 32px track — colour temperature strip.
 const tempSlider =
   "w-full h-8 rounded-full cursor-pointer appearance-none " +
   "[&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:h-8 " +
@@ -108,10 +106,24 @@ export default function LightTile({
   const [draftSat, setDraftSat] = useState(
     () => entity.attributes.hsColor?.[1] ?? 100,
   );
+  const [optimisticHs, setOptimisticHs] = useState(null);
+  const [optimisticTemp, setOptimisticTemp] = useState(null);
+  const [flashKey, setFlashKey] = useState(null);
+  const [tempDragging, setTempDragging] = useState(false);
+  const [tempDraftVal, setTempDraftVal] = useState(null);
+  const [savingMode, setSavingMode] = useState(false);
+  const [saveName, setSaveName] = useState("");
+  const [contextFav, setContextFav] = useState(null);
+  const [renamingFav, setRenamingFav] = useState(null);
+  const [renameVal, setRenameVal] = useState("");
 
   const dragRef = useRef(null);
   const sheetPanelRef = useRef(null);
+  const sheetScrollRef = useRef(null);
   const handleDragRef = useRef(null);
+  const longPressTimer = useRef(null);
+  const tempLabelTimer = useRef(null);
+  const optimisticTimer = useRef(null);
 
   const isOn = entity.state === "on";
   const {
@@ -129,7 +141,10 @@ export default function LightTile({
   const hasColour = mode === "hs" || mode === "color_temp" || mode === "combo";
   const dimmable = mode !== "onoff";
   const displayBrightness = draftBrightness ?? brightnessPct;
-  const currentColour = resolveColour(hsColor, colorTempKelvin);
+
+  const displayHsColor = optimisticHs ?? hsColor;
+  const displayColorTemp = optimisticTemp ?? colorTempKelvin;
+  const currentColour = resolveColour(displayHsColor, displayColorTemp);
 
   const favSwatches = favourites.map((f) => ({
     label: f.name,
@@ -143,6 +158,11 @@ export default function LightTile({
     hs: f.type === "hs" ? f.value : undefined,
     isFavourite: true,
   }));
+
+  const allSwatches = [...favSwatches, ...PRESETS];
+  const anyActive = allSwatches.some((s) =>
+    isSwatchActive(s, displayHsColor, displayColorTemp, mode),
+  );
 
   useEffect(() => {
     if (sheetOpen) {
@@ -177,16 +197,27 @@ export default function LightTile({
 
   function tapSwatch(swatch) {
     if (swatch.colorTemp && mode !== "hs") {
+      setOptimisticTemp(swatch.colorTemp);
+      setOptimisticHs(null);
       callService("light", "turn_on", {
         entity_id: entity.id,
         color_temp_kelvin: swatch.colorTemp,
       });
     } else {
+      setOptimisticHs(swatch.hs);
+      setOptimisticTemp(null);
       callService("light", "turn_on", {
         entity_id: entity.id,
         hs_color: swatch.hs,
       });
     }
+    clearTimeout(optimisticTimer.current);
+    optimisticTimer.current = setTimeout(() => {
+      setOptimisticHs(null);
+      setOptimisticTemp(null);
+    }, 5000);
+    setFlashKey(swatch.label);
+    setTimeout(() => setFlashKey(null), 300);
   }
 
   function applyCustom() {
@@ -205,6 +236,9 @@ export default function LightTile({
     setTimeout(() => {
       setSheetOpen(false);
       setCustomOpen(false);
+      setSavingMode(false);
+      setContextFav(null);
+      setRenamingFav(null);
     }, 300);
   }
 
@@ -270,7 +304,55 @@ export default function LightTile({
       sheetPanelRef.current.style.transition = "";
       sheetPanelRef.current.style.transform = "";
     }
-    if (delta > 80) closeSheet();
+    const scrollTop = sheetScrollRef.current?.scrollTop ?? 0;
+    if (delta > 80 && scrollTop === 0) closeSheet();
+  }
+
+  function startLongPress(label) {
+    clearTimeout(longPressTimer.current);
+    longPressTimer.current = setTimeout(() => {
+      setContextFav(label);
+    }, 500);
+  }
+
+  function cancelLongPress() {
+    clearTimeout(longPressTimer.current);
+  }
+
+  function handleTempPointerDown(e) {
+    setTempDragging(true);
+    setTempDraftVal(Number(e.target.value));
+    clearTimeout(tempLabelTimer.current);
+  }
+
+  function handleTempChange(e) {
+    const val = Number(e.target.value);
+    setTempDraftVal(val);
+    setColorTemp(val);
+  }
+
+  function handleTempPointerUp(e) {
+    setColorTemp(Number(e.target.value));
+    clearTimeout(tempLabelTimer.current);
+    tempLabelTimer.current = setTimeout(() => setTempDragging(false), 1000);
+  }
+
+  function handleSaveConfirm() {
+    const name = saveName.trim() || `${Math.round(draftHue)}°`;
+    onAddFavourite({ name, type: "hs", value: [draftHue, draftSat] });
+    setSavingMode(false);
+    setSaveName("");
+  }
+
+  function handleRenameConfirm() {
+    const fav = favourites.find((f) => f.name === renamingFav);
+    if (fav && renameVal.trim() && onRemoveFavourite && onAddFavourite) {
+      onRemoveFavourite(renamingFav);
+      onAddFavourite({ ...fav, name: renameVal.trim() });
+    }
+    setRenamingFav(null);
+    setContextFav(null);
+    setRenameVal("");
   }
 
   const colourCardStyle = {
@@ -286,6 +368,9 @@ export default function LightTile({
     transition: "background 200ms ease",
     ...(isPulsing ? { animation: "pulse-ring 0.35s ease-out" } : {}),
   };
+
+  const tempVal = tempDraftVal ?? colorTempKelvin ?? minTemp;
+  const tempPct = (tempVal - minTemp) / (maxTemp - minTemp);
 
   return (
     <>
@@ -425,13 +510,34 @@ export default function LightTile({
               <div className="w-16 h-1.5 rounded-full bg-white/20" />
             </div>
 
-            {/* Light name */}
-            <span className="font-display text-[11px] uppercase tracking-widest text-white/40 px-4 pb-2 shrink-0">
-              {entity.name}
-            </span>
+            {/* Header row: light name + close button */}
+            <div className="flex items-center justify-between px-4 pb-2 shrink-0">
+              <span className="font-display text-[11px] uppercase tracking-widest text-white/40">
+                {entity.name}
+              </span>
+              <button
+                onClick={closeSheet}
+                aria-label="Close"
+                className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 text-white/50 active:bg-white/20"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  className="w-3.5 h-3.5"
+                >
+                  <path d="M18 6 6 18M6 6l12 12" />
+                </svg>
+              </button>
+            </div>
 
             {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-5">
+            <div
+              ref={sheetScrollRef}
+              className="flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-5"
+            >
               {/* Temperature strip */}
               {(mode === "color_temp" || mode === "combo") && (
                 <div className="flex flex-col gap-2">
@@ -442,19 +548,35 @@ export default function LightTile({
                     <span className="font-display text-[10px] text-[#ff8c3a]/70 shrink-0 leading-none">
                       Warm
                     </span>
-                    <input
-                      type="range"
-                      min={minTemp}
-                      max={maxTemp}
-                      value={colorTempKelvin ?? minTemp}
-                      onChange={(e) => setColorTemp(Number(e.target.value))}
-                      aria-label="Color temperature"
-                      style={{
-                        background:
-                          "linear-gradient(to right, #ff8c3a 0%, #fffaf0 50%, #cce0ff 100%)",
-                      }}
-                      className={`${tempSlider} flex-1`}
-                    />
+                    <div className="relative flex-1">
+                      {tempDragging && (
+                        <div
+                          className="absolute -top-8 pointer-events-none"
+                          style={{
+                            left: `clamp(0px, calc(${tempPct * 100}% - 28px), calc(100% - 56px))`,
+                          }}
+                        >
+                          <span className="bg-[#1e2030] border border-white/20 rounded-lg px-2 py-1 font-display text-[10px] text-white/80 tabular-nums whitespace-nowrap">
+                            {tempVal}K
+                          </span>
+                        </div>
+                      )}
+                      <input
+                        type="range"
+                        min={minTemp}
+                        max={maxTemp}
+                        value={colorTempKelvin ?? minTemp}
+                        aria-label="Color temperature"
+                        style={{
+                          background:
+                            "linear-gradient(to right, #ff8c3a 0%, #fffaf0 50%, #cce0ff 100%)",
+                        }}
+                        className={`${tempSlider} w-full`}
+                        onPointerDown={handleTempPointerDown}
+                        onChange={handleTempChange}
+                        onPointerUp={handleTempPointerUp}
+                      />
+                    </div>
                     <span className="font-display text-[10px] text-[#cce0ff]/70 shrink-0 leading-none">
                       Cool
                     </span>
@@ -462,91 +584,196 @@ export default function LightTile({
                 </div>
               )}
 
-              {/* Colour swatches + custom picker */}
+              {/* Colour swatches */}
               {(mode === "hs" || mode === "combo") && (
-                <div className="flex flex-col gap-3">
-                  <span className="font-display text-[10px] tracking-widest uppercase text-white/30">
-                    Colour
-                  </span>
-
-                  {/* Favourites row */}
+                <div className="flex flex-col gap-4">
+                  {/* Saved favourites */}
                   {favSwatches.length > 0 && (
-                    <div className="flex gap-3 flex-wrap">
-                      {favSwatches.map((swatch) => {
+                    <div className="flex flex-col gap-2">
+                      <span className="font-display text-[10px] tracking-widest uppercase text-white/30">
+                        Saved
+                      </span>
+                      <div
+                        className="flex gap-4 overflow-x-auto -mx-4 px-4"
+                        style={{ scrollbarWidth: "none" }}
+                      >
+                        {favSwatches.map((swatch) => {
+                          const active = isSwatchActive(
+                            swatch,
+                            displayHsColor,
+                            displayColorTemp,
+                            mode,
+                          );
+                          const isFlashing = flashKey === swatch.label;
+                          const isRenaming = renamingFav === swatch.label;
+                          return (
+                            <div
+                              key={swatch.label}
+                              className="flex flex-col items-center gap-1.5 shrink-0"
+                            >
+                              <div className="relative">
+                                <button
+                                  onClick={() => {
+                                    if (contextFav === swatch.label) {
+                                      setContextFav(null);
+                                      return;
+                                    }
+                                    tapSwatch(swatch);
+                                  }}
+                                  onPointerDown={() =>
+                                    startLongPress(swatch.label)
+                                  }
+                                  onPointerUp={cancelLongPress}
+                                  onPointerLeave={cancelLongPress}
+                                  aria-label={swatch.label}
+                                  aria-pressed={active}
+                                  className="w-12 h-12 rounded-full block relative overflow-hidden"
+                                  style={{
+                                    background: swatch.bg,
+                                    transform: active
+                                      ? "scale(1.1)"
+                                      : isFlashing
+                                        ? "scale(0.92)"
+                                        : "scale(1)",
+                                    opacity: anyActive && !active ? 0.6 : 1,
+                                    transition:
+                                      "transform 150ms ease, opacity 150ms ease",
+                                    boxShadow: active
+                                      ? "0 0 0 2px white, 0 0 0 4px rgba(255,255,255,0.2)"
+                                      : "none",
+                                  }}
+                                >
+                                  {active && (
+                                    <svg
+                                      viewBox="0 0 24 24"
+                                      fill="none"
+                                      stroke="white"
+                                      strokeWidth="3"
+                                      strokeLinecap="round"
+                                      strokeLinejoin="round"
+                                      className="absolute inset-0 w-full h-full p-3 pointer-events-none"
+                                    >
+                                      <path d="M20 6 9 17l-5-5" />
+                                    </svg>
+                                  )}
+                                </button>
+                                {onRemoveFavourite && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      onRemoveFavourite(swatch.label);
+                                    }}
+                                    aria-label={`Remove ${swatch.label}`}
+                                    className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black/80 flex items-center justify-center text-white/60 text-[9px] leading-none active:text-white"
+                                  >
+                                    ×
+                                  </button>
+                                )}
+                              </div>
+                              {isRenaming ? (
+                                <div className="flex items-center gap-1">
+                                  <input
+                                    type="text"
+                                    value={renameVal}
+                                    onChange={(e) =>
+                                      setRenameVal(e.target.value)
+                                    }
+                                    maxLength={16}
+                                    autoFocus
+                                    onKeyDown={(e) => {
+                                      if (e.key === "Enter")
+                                        handleRenameConfirm();
+                                      if (e.key === "Escape") {
+                                        setRenamingFav(null);
+                                        setRenameVal("");
+                                      }
+                                    }}
+                                    aria-label="Rename colour"
+                                    className="w-16 bg-white/10 rounded px-1.5 py-0.5 font-display text-[9px] text-white border border-white/20 outline-none"
+                                  />
+                                  <button
+                                    onClick={handleRenameConfirm}
+                                    className="font-display text-[9px] uppercase tracking-widest text-[--color-primary] active:opacity-60"
+                                  >
+                                    OK
+                                  </button>
+                                </div>
+                              ) : (
+                                <span className="font-display text-[9px] uppercase tracking-widest text-white/40 truncate max-w-[56px] text-center leading-none">
+                                  {swatch.label}
+                                </span>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Colour presets */}
+                  <div className="flex flex-col gap-2">
+                    <span className="font-display text-[10px] tracking-widest uppercase text-white/30">
+                      Colours
+                    </span>
+                    <div
+                      className="grid grid-cols-3 gap-3"
+                      role="group"
+                      aria-label="Colour presets"
+                    >
+                      {PRESETS.map((swatch) => {
                         const active = isSwatchActive(
                           swatch,
-                          hsColor,
-                          colorTempKelvin,
+                          displayHsColor,
+                          displayColorTemp,
                           mode,
                         );
+                        const isFlashing = flashKey === swatch.label;
                         return (
-                          <div key={swatch.label} className="relative">
+                          <div
+                            key={swatch.label}
+                            className="flex items-center justify-center"
+                          >
                             <button
                               onClick={() => tapSwatch(swatch)}
                               aria-label={swatch.label}
                               aria-pressed={active}
-                              className={[
-                                "w-14 h-14 rounded-full block",
-                                active
-                                  ? "ring-2 ring-[--color-primary] ring-offset-2 ring-offset-[#13151f]"
-                                  : "",
-                              ].join(" ")}
-                              style={{ background: swatch.bg }}
-                            />
-                            {onRemoveFavourite && (
-                              <button
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  onRemoveFavourite(swatch.label);
-                                }}
-                                aria-label={`Remove ${swatch.label}`}
-                                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black/80 flex items-center justify-center text-white/60 text-[9px] leading-none active:text-white"
-                              >
-                                ×
-                              </button>
-                            )}
+                              className="w-14 h-14 rounded-full block relative overflow-hidden"
+                              style={{
+                                background: swatch.bg,
+                                transform: active
+                                  ? "scale(1.1)"
+                                  : isFlashing
+                                    ? "scale(0.92)"
+                                    : "scale(1)",
+                                opacity: anyActive && !active ? 0.6 : 1,
+                                transition:
+                                  "transform 150ms ease, opacity 150ms ease",
+                                boxShadow: active
+                                  ? "0 0 0 2px white, 0 0 0 4px rgba(255,255,255,0.2)"
+                                  : "none",
+                              }}
+                            >
+                              {active && (
+                                <svg
+                                  viewBox="0 0 24 24"
+                                  fill="none"
+                                  stroke="white"
+                                  strokeWidth="3"
+                                  strokeLinecap="round"
+                                  strokeLinejoin="round"
+                                  className="absolute inset-0 w-full h-full p-3 pointer-events-none"
+                                >
+                                  <path d="M20 6 9 17l-5-5" />
+                                </svg>
+                              )}
+                            </button>
                           </div>
                         );
                       })}
                     </div>
-                  )}
-
-                  {/* 3×3 preset grid */}
-                  <div
-                    className="grid grid-cols-3 gap-3"
-                    role="group"
-                    aria-label="Colour presets"
-                  >
-                    {PRESETS.map((swatch) => {
-                      const active = isSwatchActive(
-                        swatch,
-                        hsColor,
-                        colorTempKelvin,
-                        mode,
-                      );
-                      return (
-                        <div
-                          key={swatch.label}
-                          className="flex items-center justify-center"
-                        >
-                          <button
-                            onClick={() => tapSwatch(swatch)}
-                            aria-label={swatch.label}
-                            aria-pressed={active}
-                            className={[
-                              "w-14 h-14 rounded-full block",
-                              active
-                                ? "ring-2 ring-[--color-primary] ring-offset-2 ring-offset-[#13151f]"
-                                : "",
-                            ].join(" ")}
-                            style={{ background: swatch.bg }}
-                          />
-                        </div>
-                      );
-                    })}
                   </div>
 
-                  {/* Custom button */}
+                  {/* Custom picker */}
                   <button
                     onClick={() => setCustomOpen((v) => !v)}
                     aria-label={
@@ -557,7 +784,6 @@ export default function LightTile({
                     {customOpen ? "✕ Close" : "+ Custom"}
                   </button>
 
-                  {/* Custom hue + saturation picker */}
                   {customOpen && (
                     <div className="flex flex-col gap-4">
                       <div className="flex items-center gap-3">
@@ -617,26 +843,88 @@ export default function LightTile({
                         />
                       </div>
 
-                      {onAddFavourite && (
-                        <button
-                          onClick={() =>
-                            onAddFavourite({
-                              name: `${Math.round(draftHue)}° ${Math.round(draftSat)}%`,
-                              type: "hs",
-                              value: [draftHue, draftSat],
-                            })
-                          }
-                          aria-label="Save colour to favourites"
-                          className="w-full min-h-[48px] flex items-center justify-center gap-2 font-display text-[11px] tracking-widest uppercase text-white/40 active:text-white border border-white/10 rounded-xl"
-                        >
-                          ★ Save to Favourites
-                        </button>
-                      )}
+                      {onAddFavourite &&
+                        (savingMode ? (
+                          <div className="flex items-center gap-2">
+                            <input
+                              type="text"
+                              value={saveName}
+                              onChange={(e) => setSaveName(e.target.value)}
+                              maxLength={16}
+                              autoFocus
+                              placeholder={`${Math.round(draftHue)}°`}
+                              onKeyDown={(e) => {
+                                if (e.key === "Enter") handleSaveConfirm();
+                                if (e.key === "Escape") setSavingMode(false);
+                              }}
+                              aria-label="Colour name"
+                              className="flex-1 bg-white/10 rounded-xl px-3 py-2.5 font-display text-[11px] text-white border border-white/20 outline-none focus:border-[--color-primary]"
+                            />
+                            <button
+                              onClick={handleSaveConfirm}
+                              aria-label="Confirm save"
+                              className="shrink-0 px-4 py-2.5 rounded-xl bg-[--color-primary] font-display text-[10px] tracking-widest uppercase text-white active:opacity-70"
+                            >
+                              Save
+                            </button>
+                            <button
+                              onClick={() => setSavingMode(false)}
+                              className="shrink-0 px-3 py-2.5 rounded-xl bg-white/10 font-display text-[10px] tracking-widest uppercase text-white/50 active:bg-white/20"
+                            >
+                              ✕
+                            </button>
+                          </div>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              setSaveName(`${Math.round(draftHue)}°`);
+                              setSavingMode(true);
+                            }}
+                            aria-label="Save colour to favourites"
+                            disabled={favourites.length >= 6}
+                            className="w-full min-h-[48px] flex items-center justify-center gap-2 font-display text-[11px] tracking-widest uppercase text-white/40 active:text-white border border-white/10 rounded-xl disabled:opacity-30"
+                          >
+                            ★ Save to Favourites
+                          </button>
+                        ))}
                     </div>
                   )}
                 </div>
               )}
             </div>
+
+            {/* Context menu for long-pressed favourite */}
+            {contextFav && (
+              <div className="absolute bottom-0 left-0 right-0 bg-[#1e2030] border-t border-white/10 rounded-b-3xl p-4 flex gap-3">
+                <button
+                  onClick={() => {
+                    setRenameVal(contextFav);
+                    setRenamingFav(contextFav);
+                    setContextFav(null);
+                  }}
+                  className="flex-1 py-3 rounded-xl bg-white/10 font-display text-[10px] tracking-widest uppercase text-white/70 active:bg-white/20"
+                >
+                  Rename
+                </button>
+                {onRemoveFavourite && (
+                  <button
+                    onClick={() => {
+                      onRemoveFavourite(contextFav);
+                      setContextFav(null);
+                    }}
+                    className="flex-1 py-3 rounded-xl bg-red-500/20 font-display text-[10px] tracking-widest uppercase text-red-400 active:bg-red-500/30"
+                  >
+                    Delete
+                  </button>
+                )}
+                <button
+                  onClick={() => setContextFav(null)}
+                  className="flex-1 py-3 rounded-xl bg-white/5 font-display text-[10px] tracking-widest uppercase text-white/30 active:bg-white/10"
+                >
+                  Cancel
+                </button>
+              </div>
+            )}
           </div>
         </div>
       )}
