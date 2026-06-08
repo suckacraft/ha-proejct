@@ -56,6 +56,13 @@ Sign off each section before proceeding to the next.
 - [ ] Remote access confirmed from operator laptop via Tailscale
 - [ ] Client PWA accessible from outside network via Cloudflare Tunnel
 - [ ] First automated backup confirmed in Backblaze B2
+- [ ] ha-core restarted after any config changes during commissioning -- a stale
+  server causes silent SSE failures (tiles load but never update live)
+- [ ] Playwright smoke test run from operator laptop after provisioning: navigate
+  to the client app URL, toggle a light in HA, confirm the tile updates within
+  2 seconds without a refresh
+- [ ] Preferences API seeded with the client's home screen favourites
+  (POST /api/preferences/home_favourites)
 
 ---
 
@@ -81,6 +88,11 @@ Sign off each section before proceeding to the next.
 - [ ] Retainer payment set up
 - [ ] 7-day follow-up call scheduled
 - [ ] Any punch list items logged as issues
+- [ ] All device types at this site have appropriate custom tiles (not just
+  FallbackTile). Log any new device types as tile requests for the next
+  development sprint.
+- [ ] CLIENT_HANDOVER.md PWA installation completed on all household iOS devices
+  -- push notifications confirmed.
 
 ---
 

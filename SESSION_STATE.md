@@ -11,7 +11,9 @@ Colour sheet UX improvements (commit `029f02f`).
 All pre-Stage 6 work done. 119 client-app + 84 ha-core tests passing.
 
 ## In progress
-Nothing. Clean state.
+LightTile UI mobile polish -- minor refinement of the mobile interaction detail
+(bottom sheet sizing, 3x3 swatch grid, 48px touch targets) on already-committed
+colour control. Non-blocking. Otherwise clean -- ready to start Stage 6.
 
 ## Next action
 Start Stage 6: SSE reconnect handling + disconnect UI state in client-app.
@@ -30,7 +32,7 @@ Model: claude-sonnet-4-6. Effort: high.
 ## Branch state
 - main: 42fa2e7 (ha-core Stages 1-3.5)
 - stage-4-client-app: 143a340 (Stage 4 complete)
-- stage-5-room-detail: HEAD `029f02f` (Stage 5 + all pre-Stage 6 polish)
+- stage-5-room-detail: HEAD `2801685` (Stage 5, Stage 5.5 home screen, pre-Stage 6 polish)
 - stage-1-ws-client: old branch, safe to delete
 - spike: throwaway, safe to delete
 

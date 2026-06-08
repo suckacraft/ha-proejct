@@ -8,6 +8,49 @@ Use this after Stage 0 is complete and the architecture is confirmed working.
 
 ---
 
+## Stage queue and status
+
+Completion status as of this refresh (FUNCTIONALITY.md and SESSION_STATE.md are
+the source of truth):
+
+Complete:
+- Stage 0   -- end-to-end spike (throwaway)
+- Stage 1   -- ha-core WebSocket client
+- Stage 2   -- ha-core entity normalisation
+- Stage 3   -- ha-core REST API + Express server
+- Stage 3.5 -- ha-core persistence + Backblaze B2 backup + preferences API
+- Stage 4   -- client-app foundation (config, shell, useHA, PWA)
+- Stage 5   -- room detail + entity tiles (TILE_MAP)
+- Stage 5.5 -- home screen dashboard (/home default route)
+
+In progress:
+- LightTile UI mobile polish (refinement, not a blocking stage)
+
+Queued (dependency order):
+- Stage 6    -- scenes tab                    [agentic-safe]
+- Stage 6.5  -- authentication                [ALWAYS MANUAL]
+- Stage 7    -- camera view                   [ALWAYS MANUAL]
+- Stage 7.5  -- push notifications            [agentic-safe]
+- Stage 8    -- operator dashboard            [ALWAYS MANUAL]
+- Stage 9    -- whitelabel validation         [agentic-safe]
+- Stage 10   -- production Docker Compose      [agentic-safe]
+- Stage 11   -- site provisioning             [ALWAYS MANUAL]
+
+Post-Stage-11 queue:
+- Stage 12   -- remaining core tiles          [agentic-safe]
+- Stage 13   -- React Native iOS and Android  [classify when scoped]
+- Stage 14   -- energy dashboard              [agentic-safe]
+- Stage 15   -- MediaTile + audio integration [classify when scoped]
+- Stage 16   -- kiosk tablet app              [agentic-safe]
+- Stage 17   -- franchisee management         [classify when scoped]
+- Stage 18   -- AI vision layer               [classify when scoped]
+- Stage 19   -- advanced automation builder   [classify when scoped]
+
+Stage 5.5 is safe for agentic pipeline mode. Stages 1-5.5 are already complete;
+the live queue starts at Stage 6.
+
+---
+
 ## How to use this
 
 1. Confirm HA is running and MCPs are set correctly for your starting stage
@@ -28,16 +71,24 @@ Your responses:
 
 ## When to use agentic mode
 
-Safe stages for agentic runs (low architectural risk, clear test gates):
-- Stages 3 through 6 once ha-core is confirmed working
-- Stage 8 (operator dashboard) once auth is complete
+Agentic-safe stages (low architectural risk, clear test gates):
+- Stage 5.5 (home screen dashboard) -- config-driven, delivered, safe pattern
+- Stage 6 (scenes) -- config-driven, test manually via the running app
+- Stage 7.5 (push notifications) -- tested end to end via the running app
 - Stage 9 (whitelabel validation) -- config only
 - Stage 10 (Docker + docs) -- mechanical, low risk
+- Stage 12 (remaining core tiles) -- follows the existing TILE_MAP pattern
+- Stage 14 (energy dashboard) -- new domain, additive
+- Stage 16 (kiosk tablet app) -- new package, additive
 
 Always manual (review every step yourself):
 - Stage 0 (spike) -- throwaway, needs your eyes on the result
 - Stage 6.5 (auth) -- highest security risk, never agentic
+- Stage 7 (cameras) -- security-sensitive feeds and lock context
+- Stage 8 (operator dashboard) -- cross-site control plane, staged rollout controls
 - Stage 11 (provisioning) -- real credentials involved
+
+Stages 13, 15, 17, 18, and 19 are not yet classified -- decide per stage when scoped.
 
 ---
 

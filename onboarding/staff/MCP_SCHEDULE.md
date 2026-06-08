@@ -4,6 +4,18 @@ MCP tool descriptions sit in the context window every turn. Running all MCPs
 simultaneously adds 4-6k tokens per request before you have asked anything.
 Activate only the MCP needed for the current stage. Deactivate after.
 
+## Playwright MCP (browser verification, any frontend stage)
+
+Playwright MCP can be added for any stage that needs browser verification:
+
+    claude mcp add playwright npx -- @playwright/mcp
+
+Remove it once verification is complete. It counts as one of the two active MCP
+slots, so deactivate another MCP if needed to stay within the limit. Install the
+browser first:
+
+    npx playwright install chromium
+
 ---
 
 ## Commands
@@ -31,6 +43,7 @@ filesystem and Context7 stay active throughout -- they are low token overhead.
 | 3.5 -- Persistence | ON | ON | OFF | Validate backup trigger hits HA snapshot API |
 | 4 -- App foundation | ON | OFF | OFF | No live HA needed, keep context lean |
 | 5 -- Components | ON | OFF | OFF | Most token-heavy stage, no MCPs beyond filesystem |
+| 5.5 -- Home screen | ON | OFF | OFF | Weather and device counts come from the Zustand store, already seeded from ha-core |
 | 6 -- Scenes | ON | OFF | OFF | Config-driven, test manually via running app |
 | 6.5 -- Auth | ON | OFF | ON | Commit auth as tagged release before cameras |
 | 7 -- Cameras | ON | ON | OFF | Validate Frigate entity structure via hass-mcp |

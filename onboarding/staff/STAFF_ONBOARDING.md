@@ -65,24 +65,61 @@ Key decisions already made (do not revisit without a team discussion):
 
 ---
 
-## Step 4 -- Your first task
+## Step 4 -- Find the current stage and your first task
 
-Before touching application code, run Stage 0 (the throwaway spike):
+Stage 0 (the throwaway spike) is complete, along with ha-core (Stages 1-3.5)
+and client-app through Stage 5.5. You are NOT starting from scratch.
 
-Open Claude Code from the project folder:
+To find where the build is right now, read SESSION_STATE.md first. It is updated
+at every checkpoint and names the current stage, the next action, and the model
+and effort to use.
+
+Current state at the time of writing:
+- Home screen dashboard (Stage 5.5) is delivered: /home is the default route.
+- LightTile UI mobile polish is the one item still in progress.
+- Next stage to build is Stage 6 (Scenes tab).
+
+Open Claude Code from the project folder and run the context reset prompt from
+onboarding/staff/CLAUDE_CODE_WORKFLOW.md before touching any code:
 
     cd C:\Users\USERNAME\smarthome-platform
     claude
 
-Paste the Stage 0 prompt from the kickoff document:
-    docs/HA_PROJECT_KICKOFF_PROMPT.md
-
-Stage 0 proves the full round trip works -- one light, controllable end to end.
-It is deliberately ugly and throwaway. Do not build on it.
+You can still read the Stage 0 spike description in
+docs/HA_PROJECT_KICKOFF_PROMPT.md to understand the end-to-end round trip, but do
+not rebuild it -- it was throwaway by design.
 
 ---
 
-## Step 5 -- Ongoing workflow
+## Step 5 -- Key conventions you must know
+
+These reflect decisions already locked in. Violating them silently breaks things
+or gets reverted in review.
+
+Preferences API is the source of truth for ALL user preferences. Favourites, room
+defaults, and home screen configuration live in ha-core via /api/preferences/:key.
+There is NO localStorage anywhere in shared logic. This is what keeps the PWA, the
+future React Native app, and the kiosk in sync. Read and write every preference
+through /api/preferences/:key.
+
+Adding a new device tile: add a component to src/components/devices/ and register
+it in TILE_MAP in src/components/devices/index.js. That registry is the single
+extension point -- there is no switch/if-else to touch.
+
+Playwright on every frontend stage: all frontend stages now include Playwright
+browser verification at a 375px mobile viewport, in addition to Vitest unit tests.
+Before starting any frontend stage, install the browser once:
+
+    npx playwright install chromium
+
+Always restart ha-core after pulling commits. If ha-core keeps running old code
+after a commit that touched ha-core/src/, SSE updates silently stop working (tiles
+render initial state on load but never update live). Kill the running process and
+restart it. See setup/SETUP.md Known Issues for the full root cause.
+
+---
+
+## Step 6 -- Ongoing workflow
 
 See CLAUDE_CODE_WORKFLOW.md for the full session discipline.
 

@@ -24,6 +24,8 @@ what support response times to expect, and how to reach us.
 - One remote support session per month included
 - Config backup with 90-day retention
 - Camera event clips retained for 90 days
+- Home screen dashboard personalisation (favourite rooms, preferred scenes)
+  included in the annual system review
 
 ### Premium -- $180/month
 
@@ -35,6 +37,9 @@ what support response times to expect, and how to reach us.
 - Quarterly on-site review
 - Config backup with 1-year retention
 - Camera event clips retained for 6 months
+- Quarterly home screen dashboard review and personalisation update
+- New device tile types added within 30 days of any new smart device purchase
+  by the client
 
 ---
 

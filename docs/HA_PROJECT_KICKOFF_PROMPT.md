@@ -597,6 +597,15 @@ Requirements:
   GET /history/uptime            connection uptime summary
   GET /history/device/:id        availability history for one device
   GET /history/backups           backup history and last success timestamp
+- Preferences API (delivered in Stage 3.5): a per-site key/value store backed by
+  SQLite, used by the client-app for favourites, room defaults, and home screen
+  configuration:
+  GET  /api/preferences          all keys for this site (used for hydration)
+  GET  /api/preferences/:key     single preference value (null when unset)
+  POST /api/preferences/:key     upsert { value } (any JSON, 128 char key limit)
+  Site-scoped via composite PK (site_id, key). All user preference state lives
+  here, never in the browser -- this keeps the PWA, future React Native, and
+  kiosk surfaces in sync.
 - Prune history older than 90 days automatically (configurable)
 - Nightly backup job (node-cron or similar):
   - Triggers HA snapshot via REST API
@@ -642,6 +651,14 @@ Monospace or geometric sans typography. Tight, purposeful spacing.
 Test: render the app shell with a placeholder room list pulled from
 client.config.json. Confirm config system works before building room views.
 
+Notes (added during build):
+- Do NOT create postcss.config.js. Tailwind 4 + @tailwindcss/vite handles
+  everything; a postcss.config.js (even autoprefixer-only) makes Vite's PostCSS
+  pipeline intercept @import "tailwindcss" and trigger Tailwind's guard error.
+  There must be no PostCSS config file in the client-app package.
+- The default route is /home (the home screen dashboard from Stage 5.5), which
+  replaces /rooms as the app entry point. / redirects to /home.
+
 ---
 
 ### STAGE 5 -- client-app: Room and device views
@@ -670,6 +687,48 @@ All components must:
 
 Test: control a real light through the UI. Confirm state updates in real
 time after the command.
+
+Actual scope (as built):
+- Tiles are dispatched via a TILE_MAP registry in src/components/devices/index.js.
+  Adding a new device type is a one-line registration, no switch/if-else. This is
+  the extension point for ALL future tiles.
+- LightTile delivered full colour control: card-as-slider drag brightness, plus a
+  bottom sheet with a temperature gradient strip, a 3x3 swatch grid, and a custom
+  hue/saturation picker. Modes: onoff, brightness, color_temp, hs, rgb, rgbw,
+  rgbww, combo.
+- Tiles consume the ha-core preferences API for server-side favourites and room
+  default brightness. No localStorage.
+- callService is a standalone src/lib/callService.js (no hook wrapper); useHA is
+  SSE-only. Tiles import callService directly, so no prop drilling.
+- Verification includes Playwright browser checks at a 375px mobile viewport in
+  addition to Vitest unit tests. All frontend stages now include Playwright.
+
+---
+
+### STAGE 5.5 -- client-app: Home screen dashboard (DELIVERED)
+
+Status: delivered ahead of Stage 6 as pre-Stage-6 work. /home is now the default
+route. Documented here so the roadmap is complete and matches FUNCTIONALITY.md.
+
+Build a home screen dashboard at /home that replaces /rooms as the default route
+and app entry point.
+
+Requirements:
+- /home as the default route; / redirects to /home; shared Header hidden on /home
+- Time-of-day greeting (Good morning/afternoon/evening + the client's firstName)
+- Weather widget driven by the HA weather entity
+- Active device summary row: lights on, temperature, unlocked locks
+- Favourite rooms row: default first 3 rooms, overridable via the home_favourites
+  key in the preferences API
+- Quick scene buttons: scenes from config, 1.5s flash feedback on tap
+- Now playing section: shown when a media_player is in the "playing" state
+- Bottom nav tab 1 is Home, routing to /home
+
+MCP: filesystem only. Weather and device counts come from the Zustand store,
+already seeded from ha-core. Model: Sonnet. Effort: high. Agentic-safe.
+
+Test: load /home, confirm the greeting, weather, summary pills, favourite rooms,
+and quick scenes render, and that scene taps fire scene.turn_on.
 
 ---
 
@@ -839,7 +898,9 @@ Finalise deployment configuration.
 Requirements:
 - docker-compose.yml with:
   - ha-core service (port 3001)
-  - client-app service (port 3000, served via nginx)
+  - client-app service (port 3000, served via nginx) -- serves the PWA only.
+    The React Native app (Stage 13) is a separate deployment path NOT covered
+    by Docker Compose.
   - operator-app service (port 3002, served via nginx)
   - Shared network
   - Volume mounts for config files and logs
@@ -882,6 +943,8 @@ Requirements:
   - This is what gives the client frictionless away-from-home access with
     no open router ports
   - Record the tunnel name and hostname in the site record
+  - Configure the client-app (PWA) URL for the site. The future React Native
+    app URL (Stage 13) is configured later and is out of scope for this stage.
 - Tailscale enrolment of the box onto the operator tailnet for support
   access (separate from the client tunnel above)
 - Output: a complete, valid client.config.json, SOPS-encrypted secrets,
@@ -892,6 +955,57 @@ Requirements:
 
 Test: provision a fresh mock site end to end and confirm the generated
 client.config.json loads correctly in the client-app.
+
+---
+
+## POST STAGE 11 ROADMAP
+
+These stages are planned beyond the initial 11-stage build. They are awareness
+only at this point and match the Post Stage 11 Roadmap in FUNCTIONALITY.md exactly.
+Do not implement them during the staged build above.
+
+Stage 12: Remaining core tiles
+  LockTile (toggle + confirmation, locked/unlocked state), CoverTile (position
+  slider, tilt, open/close/stop), BinaryTile (door/motion/smoke/water, read-only,
+  iconography), AlarmTile (arm/disarm with PIN, state colour coding).
+  Effort: 2-3 days total.
+
+Stage 13: React Native iOS and Android
+  Rebuild client-app in React Native. Same ha-core API, same Zustand store pattern,
+  same preferences API. Native push (APNs/FCM), haptic feedback, App Store/Play
+  Store. No localStorage -- all state from ha-core. Effort: 3-4 weeks.
+
+Stage 14: Energy dashboard
+  Solar generation vs consumption, battery state, grid import/export, Amber
+  Electric real-time pricing. Supports: Fronius, SolarEdge, Sungrow, Huawei,
+  Goodwe, Enphase, Tesla Powerwall. EnergyTile + dedicated /energy route.
+  Effort: 1-2 weeks.
+
+Stage 15: MediaTile and audio integration
+  Full now-playing with album art, playback controls, volume, room routing.
+  OwnTone + Node.js HEOS bridge integration. Sonos, Apple TV, Samsung TV via HA.
+  Effort: 2-3 weeks.
+
+Stage 16: Kiosk tablet app
+  New kiosk-app package in the monorepo. Always-on layout: no bottom nav,
+  persistent camera feeds, large touch targets, room overview always visible.
+  Hardware bundle: pre-configured iPad + wall mount. Same ha-core API.
+  Effort: 1-2 weeks.
+
+Stage 17: Franchisee management
+  operator-app multi-tenant. Role hierarchy: super-admin, franchisee-admin,
+  technician, client. Licence fee tracking. White-label config management per
+  franchisee. Effort: 2-3 weeks.
+
+Stage 18: AI vision layer
+  Frigate zones + Claude vision API for garden/lawn monitoring, package detection,
+  vehicle identification, robot mower zone targeting. ha-core automation layer,
+  not a frontend change. Effort: 1 week per use case.
+
+Stage 19: Advanced automation builder
+  Visual node-based automation editor (like Homey Flow). No-code interface for
+  clients to build their own automations. Most complex stage in the full roadmap.
+  Effort: 4-6 weeks.
 
 ---
 

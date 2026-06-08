@@ -16,6 +16,10 @@ Confirm these are complete before sitting down with the client:
 - [ ] Person detection tested on at least one camera
 - [ ] Remote access confirmed from outside the home network
 - [ ] Config backup confirmed in Backblaze B2
+- [ ] Home screen dashboard configured -- favourite rooms set in the preferences
+  API, client name correct in config
+- [ ] Weather entity available in HA (add OpenWeatherMap or similar integration
+  if not present)
 - [ ] Client PWA installed on client's phone (see iOS note below)
 - [ ] Client PWA installed on all household members' phones
 - [ ] HA update auto-update disabled
@@ -25,12 +29,19 @@ Confirm these are complete before sitting down with the client:
 
 ## Installing the PWA on the client's phone
 
+IMPORTANT (iOS): iOS push notifications ONLY work after the PWA is installed to
+the home screen via Safari. Make this step 1 on every iOS device before anything
+else. If it is skipped, security alerts will not reach the client's phone.
+
 ### Android
 
 1. Open Chrome on the client's phone
 2. Navigate to the client app URL (from provisioning/site-template/site.config.json)
 3. Tap the three-dot menu > Add to Home Screen
 4. Confirm -- the app icon appears on the home screen
+
+Note: push notifications work more reliably on Android even without installation,
+but installing to the home screen is still recommended.
 
 ### iOS
 

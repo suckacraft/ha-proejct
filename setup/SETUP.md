@@ -229,7 +229,11 @@ Stage 4 refactored wireEvents to normalise before broadcast. If the server is
 running Stage 3.5 code, useHA receives data.id === undefined and all SSE updates
 write to the wrong Zustand Map key — tiles never update live.
 Fix: Always restart ha-core after pulling new commits that touch ha-core/src/.
-  HASS_TOKEN=<token> npm run dev -w packages/ha-core
+Kill the running process (Ctrl+C) and re-run, on Windows PowerShell:
+  cd C:\Users\Josh\smarthome-platform
+  $env:HASS_URL="http://localhost:8123"
+  $env:HASS_TOKEN="YOUR_TOKEN"
+  npm run dev -w packages/ha-core
 The normalised SSE envelope is: { id, domain, name, state, attributes, lastChanged }
 NOT: { entity_id, new_state, old_state }
 This contract is verified by the wireEvents tests in ha-core/test/events.test.js.
@@ -248,6 +252,29 @@ Fix option 3 (permanent): Run this in Administrator PowerShell to restore it:
   New-Item -Path "$p\command" -Force
   Set-ItemProperty -Path "$p\command" -Name "(Default)" -Value 'powershell.exe -NoExit -Command "Set-Location -LiteralPath ''%V''"'
 
+### Issue: Tailwind 4 + Vite -- never create postcss.config.js
+Date discovered: June 2026
+Symptom: Browser shows PostCSS error: "trying to use tailwindcss directly as a
+PostCSS plugin"
+Root cause: postcss.config.js intercepts @import "tailwindcss" before
+@tailwindcss/vite can process it, triggering Tailwind's guard error. Even an
+autoprefixer-only postcss.config.js causes this.
+Fix: Delete postcss.config.js entirely. @tailwindcss/vite handles everything.
+No PostCSS configuration file should exist in the client-app package.
+
+### Issue: iOS Web Push requires PWA installed to home screen
+Date discovered: June 2026
+Symptom: Push notifications not received on iOS devices even after Stage 7.5 is
+complete and Web Push is working on Android.
+Root cause: iOS only delivers Web Push to installed PWAs. A website open in Safari
+does not receive push.
+Fix: During client handover, install the PWA on every iOS device in the household
+via Safari > Share > Add to Home Screen. Open the installed app and accept
+notification permissions. This is mandatory for the security alert use case.
+Document in CLIENT_HANDOVER.md.
+Note: Stage 13 React Native solves this permanently via native APNs push
+notifications.
+
 ---
 
 ## Update Log
@@ -259,6 +286,7 @@ Fix option 3 (permanent): Run this in Administrator PowerShell to restore it:
 | June 2026 | v1.2 | Fixed ha-mcp package name and env vars, fixed docker-compose for Windows, fixed skills agent targeting, added Demo integration auto-setup, direct .claude.json write for MCP config |
 | June 2026 | v1.3 | Added context-monitoring Stop hook to .claude/settings.json; documented CLAUDE.md rule 20 enforcement limitation |
 | June 2026 | v1.4 | Added stale ha-core gotcha: SSE stops working if server runs old code after a commit |
+| June 2026 | v1.5 | Added Tailwind 4 postcss.config.js and iOS Web Push known issues; expanded the stale ha-core restart steps for PowerShell |
 
 ---
 
