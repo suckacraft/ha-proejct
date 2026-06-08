@@ -43,6 +43,13 @@ function Test-Port([int]$port) {
     } catch { return $false }
 }
 
+function Clear-Port([int]$port) {
+    $conns = Get-NetTCPConnection -LocalPort $port -State Listen -ErrorAction SilentlyContinue
+    foreach ($conn in $conns) {
+        try { Stop-Process -Id $conn.OwningProcess -Force -ErrorAction Stop } catch {}
+    }
+}
+
 function Start-Service([string]$title, [string]$workspace, [string]$logPath) {
     $inner = @"
 `$host.UI.RawUI.WindowTitle = '$title'
@@ -63,6 +70,10 @@ if (-not (Test-Path $logDir)) { New-Item -ItemType Directory $logDir | Out-Null 
 # ── Check operator-app ───────────────────────────────────────────────────────
 $operatorPkg   = "$ProjectRoot\packages\operator-app\package.json"
 $operatorReady = Test-Path $operatorPkg
+
+# ── Clear any existing processes on platform ports ───────────────────────────
+Write-Host 'Clearing existing processes...' -ForegroundColor DarkGray
+foreach ($port in @(3001, 5173, 5174, 5175, 5176, 3002)) { Clear-Port $port }
 
 # ── Launch services ──────────────────────────────────────────────────────────
 $procs = [System.Collections.Generic.List[System.Diagnostics.Process]]::new()
