@@ -2,6 +2,100 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-08 — Stage 3.5: ha-core persistence and backup
+
+**Status:** Complete (branch: stage-1-ws-client, commit 276b91f)
+
+**Decisions:**
+- device_history sampling: availability transitions always written (safety-relevant),
+  other changes throttled to 5-min windows to avoid DB bloat on chatty sensors
+- B2 upload uses @aws-sdk/client-s3 against B2's S3-compatible endpoint (not the
+  B2 native SDK) -- fewer moving parts, easier to swap storage providers later
+- SOPS encryption of backup files deferred to Stage 11 provisioning (age key
+  not available until a site is actually provisioned)
+- Camera clip sync deferred to after Stage 7 (Frigate integration not yet built)
+- setDb() injection pattern for tests -- no temp files, no filesystem I/O in tests
+- node-cron 4.2.1 (latest), @aws-sdk/client-s3 3.1063.0 (latest) -- exact pins
+
+**Test evidence:**
+- 65/65 unit tests pass (18 new DB tests)
+- Live: /backup/run -> haSnapshot:true (HA backup actually created),
+  b2Skipped:true (no creds), backup_completed event confirmed in site_events
+
+## 2026-06-08 — Stage 3: ha-core REST API and Express server
+
+**Status:** Complete (branch: stage-1-ws-client, commit e0b4f98)
+
+**Decisions:**
+- createRouter() factory pattern: deps injected so unit tests run with a stub
+  ws-client and no live server (no supertest dependency needed -- Node 24 fetch)
+- SSE decided browser transport (not WebSocket) per architecture decision 2
+- SseManager singleton with 30s heartbeat -- keeps Cloudflare Tunnel alive
+- index.js only runs server when executed directly (import.meta.url guard),
+  safe to import in tests
+- /entities/:param handles both domain and entity ID via dot-check in one handler
+- callService added to ws-client with 10s timeout and { resolve, reject }
+  pending requests (upgraded from callback-only pattern)
+
+**Test evidence:**
+- 47/47 tests pass (15 new API tests, 32 entity regression tests)
+- Live smoke: /health connected:true entityCount:118, /entities 118 entities,
+  /rooms [] (empty until client.config.json is populated in Stage 4)
+
+## 2026-06-08 — Stage 2: ha-core entity normalisation
+
+**Status:** Complete (branch: stage-1-ws-client, commit 3c472e2)
+
+**Decisions:**
+- Designed against 118 real HA entities (38 domains) captured via ws-client,
+  not idealised shapes -- exactly per the kickoff doc prerequisite
+- brightness exposed as brightnessPct (0-100), hiding HA's 0-255 scale
+- HA naming quirks (temperature/humidity) absorbed here; contract is stable
+- supported_features kept as raw number -- bitmask decoding deferred to Stage 5
+  (presentation concern, not data concern)
+- 29 non-product domains pass through unchanged for forward compatibility
+- normaliseEntity is pure; room mapping injected from caller (testable without HA)
+- Regression fixtures built from real captured shapes with tokens sanitised
+- stage-1 and stage-2 both landed on stage-1-ws-client branch (no rename needed
+  unless requested -- all ha-core foundation work fits one branch)
+
+**Test evidence:**
+- 32 fixture-based regression tests pass (real HA attribute shapes)
+- Live run: 118 entities normalised across 38 domains, zero automation/script/group
+  leakage confirmed, correct camelCase contracts on light/climate/media_player/lock
+
+**Also this session:**
+- ~/.claude.json recovered from corruption (manual ha-mcp edit left truncated JSON)
+  Restored from backup 1780895024481 + ha-mcp block re-injected cleanly
+  ha-mcp will load on next Claude Code restart
+- CLAUDE.md rules 16 and 17 updated: model/effort are user-typed slash commands,
+  never programmatic
+
+## 2026-06-08 — Stage 1: ha-core WebSocket client
+
+**Status:** Complete (branch: stage-1-ws-client, commit 56b8ae8)
+
+**Decisions:**
+- Native Node 24 WebSocket (global) -- no `ws` package, same as spike
+- Token sourced from `HASS_TOKEN` env var, falls back to config.json placeholder
+- Singleton export pattern -- one connection per ha-core process
+- `home-assistant-js-websocket` retained as dependency for future stages but
+  not used here; native WS gives full control over backoff and event shape
+- `"type": "module"` added to ha-core package.json (all src files are ESM)
+
+**What was done:**
+- `ws-client.js`: auth handshake, state_changed subscription, get_states cache
+  population, exponential backoff reconnect (1s base, 30s cap), EventEmitter
+  events, getState/getAllStates/subscribe API
+- 4 integration tests in `test/ws-client.test.js`, skip gracefully without token
+- CLAUDE.md rules 16 and 17 revised: model and effort are user-typed slash
+  commands, not programmatic -- Claude prompts user with exact text to type
+
+**Test evidence:**
+- All 4 tests passed against live HA
+- 5 state_changed events received in 2.5s
+- Cache populated, subscribe API confirmed working
+
 ## 2026-06-08 — Stage 0b: End-to-end spike (de-risking)
 
 **Status:** Complete (throwaway, lives on `spike` branch 6b0cc39, not on master)

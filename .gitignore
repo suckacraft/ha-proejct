@@ -1,4 +1,5 @@
 node_modules/
+packages/ha-core/data/
 dist/
 .env
 .env.*

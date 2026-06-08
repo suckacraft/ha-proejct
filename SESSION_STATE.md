@@ -4,34 +4,37 @@ This file is updated automatically at every checkpoint and stage
 completion. If starting a new session, read this file first.
 
 ## Current stage
-Stage 0 (end-to-end spike) -- COMPLETE
+Stage 3.5 (persistence and backup) -- COMPLETE
 
 ## Last completed
-Stage 0 spike validated the full path end to end: browser button -> Node
-WebSocket script -> HA call_service -> real light (light.bed_light) toggled
-off->on->off, cross-checked against HA /api/states. Committed on the `spike`
-branch (6b0cc39); throwaway, not built upon.
+Stage 3.5: SQLite persistence (site_events + device_history), /history/*
+endpoints, /backup/run, nightly backup + prune crons. 65/65 tests pass.
+Live run confirmed HA snapshot triggered and backup_completed event in DB.
+Committed on stage-1-ws-client (276b91f).
 
 ## In progress
 Nothing.
 
 ## Next action
-Stage 1: build packages/ha-core/src/ws-client.js -- HA WebSocket client with
-auth, reconnection (exponential backoff, 30s cap), events
-(connected/disconnected/state_changed/error), state_changed subscription,
-local entity cache (Map), and getState/getAllStates/subscribe. Test: log 5
-state_changed events from live HA. MCP schedule for Stage 1: Filesystem +
-hass-mcp. See STAGE 1 in docs/HA_PROJECT_KICKOFF_PROMPT.md.
+Stage 4: client-app foundation.
+Build packages/client-app/src with: Vite+React+Tailwind, client.config.json
+reader (clientName, logoUrl, colours, rooms), useHA custom hook (SSE consumer
+for real-time state + REST for commands), Zustand entity store, PWA manifest +
+service worker stub, app shell with bottom nav (Rooms, Scenes, Cameras,
+Settings), dark editorial aesthetic, primary colour from config as CSS variable.
+Test: render app shell with placeholder room list from client.config.json.
+MCP: Filesystem only. Model: Sonnet 4.6. Effort: high.
 
 ## Open decisions
-- ha-key.txt in repo root is a leaked Claude credential (gitignored, not yet
-  removed/rotated) -- handle later.
-- spike/.ha-token holds the live HA long-lived token (gitignored on both
-  master and spike). Revoke it in HA after the spike if desired.
+- Branch stage-1-ws-client holds Stages 1-3.5. Merge to main before Stage 4,
+  or continue on branch. Recommend merging now -- ha-core is complete.
+- B2 credentials (B2_APPLICATION_KEY_ID/KEY/BUCKET/ENDPOINT) wired via
+  SOPS-decrypted env vars; provisioned in Stage 11.
+- Camera clip sync to B2 deferred to after Stage 7 (Frigate).
+- ha-mcp active in ~/.claude.json but needs Claude Code restart to load.
 
 ## Last commit
-master: docs -- record Stage 0 spike result (this commit)
-spike branch: 6b0cc39 chore(spike): Stage 0 end-to-end spike
+stage-1-ws-client: 276b91f feat(ha-core): Stage 3.5 -- SQLite persistence
 
 ## Context reset prompt location
 onboarding/staff/CLAUDE_CODE_WORKFLOW.md
