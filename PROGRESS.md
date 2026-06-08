@@ -1,5 +1,7 @@
 # Progress Log
 
+See also SESSION_STATE.md for quick-start context for new sessions.
+
 ## 2026-06-08 — Stage 0: Monorepo Scaffolding
 
 **Status:** Complete

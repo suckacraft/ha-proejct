@@ -1,0 +1,15 @@
+node_modules/
+dist/
+build/
+.next/
+coverage/
+*.log
+*.lock
+.env
+*.enc.env
+secrets*
+*.sqlite
+*.db
+backup/
+.git/
+.claude/settings.local.json

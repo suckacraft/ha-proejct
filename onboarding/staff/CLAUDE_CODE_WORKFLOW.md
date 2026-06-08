@@ -35,6 +35,7 @@ Paste this at the start of every new Claude Code session:
     3. Confirm what has been built, what is in progress, and what comes next
     4. Check the MCP schedule in onboarding/staff/MCP_SCHEDULE.md for the
        current stage and deactivate any MCPs not on the schedule
+    5. Set session default: claude config set model claude-sonnet-4-6
     Enter plan mode (Shift+Tab) and propose the next step before writing
     any code. Wait for my confirmation before proceeding.
 
