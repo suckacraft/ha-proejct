@@ -9,6 +9,22 @@
 - [x] Docker Compose configuration
 - [x] Development tooling (Prettier, Vitest, Nodemon)
 
+## Stage 3: ha-core REST API and Express server
+
+- [x] Express server on port 3001 (`index.js`)
+- [x] `GET /entities` -- all 118 normalised entities
+- [x] `GET /entities/:domain` -- filter by domain (no dot in param)
+- [x] `GET /entities/:entityId` -- single entity (dot in param)
+- [x] `GET /rooms` and `GET /rooms/:roomId/entities` -- from client.config.json
+- [x] `POST /services/:domain/:service` -- calls HA via ws-client.callService
+- [x] `POST /scenes/:sceneId` -- calls scene.turn_on (accepts "movie_night" or "scene.movie_night")
+- [x] `GET /events` -- SSE endpoint; 30s heartbeat; broadcasts normalised state_changed
+- [x] `GET /health` -- connected status, entity count, SSE client count, uptime
+- [x] CORS, Helmet, Morgan middleware
+- [x] ws-client extended: callService (Promise, 10s timeout), connected getter
+- [x] createRouter() injectable deps -- 15 unit tests with stub ws-client, no live HA needed
+- Branch: `stage-1-ws-client` (commit e0b4f98)
+
 ## Stage 2: ha-core entity normalisation
 
 - [x] `entities.js` normalises raw HA entities into `{ id, domain, name, state, attributes, lastChanged }`

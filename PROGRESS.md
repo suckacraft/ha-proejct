@@ -2,6 +2,26 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-08 — Stage 3: ha-core REST API and Express server
+
+**Status:** Complete (branch: stage-1-ws-client, commit e0b4f98)
+
+**Decisions:**
+- createRouter() factory pattern: deps injected so unit tests run with a stub
+  ws-client and no live server (no supertest dependency needed -- Node 24 fetch)
+- SSE decided browser transport (not WebSocket) per architecture decision 2
+- SseManager singleton with 30s heartbeat -- keeps Cloudflare Tunnel alive
+- index.js only runs server when executed directly (import.meta.url guard),
+  safe to import in tests
+- /entities/:param handles both domain and entity ID via dot-check in one handler
+- callService added to ws-client with 10s timeout and { resolve, reject }
+  pending requests (upgraded from callback-only pattern)
+
+**Test evidence:**
+- 47/47 tests pass (15 new API tests, 32 entity regression tests)
+- Live smoke: /health connected:true entityCount:118, /entities 118 entities,
+  /rooms [] (empty until client.config.json is populated in Stage 4)
+
 ## 2026-06-08 — Stage 2: ha-core entity normalisation
 
 **Status:** Complete (branch: stage-1-ws-client, commit 3c472e2)
