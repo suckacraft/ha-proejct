@@ -2,9 +2,74 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-08 — Pre-Stage 6 UI polish + home screen
+
+**Status:** Complete (branch: stage-5-room-detail).
+
+**Commits this session:**
+- `582faab` — LightTile full colour and temperature control
+- `7f8c11c` — LightTile controls fix (rgbww/toggle/drag unified)
+- `e216c63` — ha-core per-site preferences API (SQLite)
+- `d1cffd4` — client-app favourites + room defaults via preferences API
+- `504bf02` — mobile UI polish (bottom sheet, tile designs, touch targets)
+- `e9eb8a9` — home screen dashboard + 5-tab BottomNav with icons
+- `029f02f` — colour sheet UX improvements (active swatch, inline save, long-press)
+
+**LightTile redesign (commits `582faab`, `7f8c11c`):**
+- Card-as-brightness-drag with warm radial glow (scales with brightness).
+- Bottom sheet: temperature strip, 3×3 swatch presets, custom H/S picker.
+- `resolveMode()` correctly handles rgbww/rgbw/xy; unified `<div>` card with
+  power icon on every variant.
+- Verified in browser at 375px via Playwright.
+
+**ha-core preferences API (commit `e216c63`):**
+- `preferences(site_id, key, value, updated_at)` table, UPSERT on conflict.
+- `GET /preferences`, `GET /preferences/:key`, `POST /preferences/:key`.
+- Used by client for favourites, room defaults, home favourites.
+
+**Client-side favourites + room defaults (commit `d1cffd4`):**
+- `usePreferencesStore`: hydrates from `/api/preferences` on mount.
+- `addFavourite` / `removeFavourite` + `saveRoomDefault` / `clearRoomDefault`.
+- RoomDetail: default brightness slider, Apply button, clear.
+- LightTile: Save to Favourites (inline name input), fav swatches before presets.
+- Playwright verification passed at 375px.
+
+**Mobile UI polish (commit `504bf02`):**
+- Bottom sheet: 75svh, spring animation, primary-tint border, X close button.
+- Light tiles: two designs — onoff (centred icon) vs colour-capable (drag+glow).
+- Sensor tiles: 32px value, 11px muted caps.
+- Climate tiles: current→target temp inline, colour-coded pills, ±44px buttons.
+- RoomDetail: flex gap-3, divider after heading.
+
+**Home screen dashboard (commit `e9eb8a9`):**
+- `/home` as default route; shared Header hidden on home.
+- HomeScreen: greeting (time-of-day + firstName), weather widget, active
+  summary pills (lights on, temperature, locks), favourite rooms horizontal
+  scroll (default first 3), quick scene pills, now playing section.
+- BottomNav: 5 tabs with filled SVG icons (Home, Rooms, Scenes, Cameras, Settings).
+- `useClock` hook (1-min interval), `homeFavourites` in preferences store.
+
+**Colour sheet UX improvements (commit `029f02f`):**
+- Active swatch: scale(1.1) + white ring + 0.6 opacity on inactive + checkmark.
+- Tap ripple (scale flash). Separate Saved/Colours sections with labels.
+- Inline name input for saving favourites (max 6 total, Enter/Escape).
+- Long-press 500ms context menu (Rename/Delete action sheet at sheet bottom).
+- Floating kelvin label on temp drag, disappears 1s after release.
+- Swipe-to-dismiss blocked when sheet content scrolled down.
+- Optimistic colour preview on tile colour circle after swatch tap.
+
+**Test evidence:**
+- 119/119 client-app unit tests pass (13 test files).
+- 84/84 ha-core tests pass.
+- 203 total tests across workspace.
+
+**Next:** Stage 6 — SSE reconnect + disconnect UI state (Sonnet, high effort).
+
 ## 2026-06-08 — LightTile redesign + ha-core preferences API
 
-**Status:** In progress (branch: stage-5-room-detail). Parts 1–2 complete.
+**Status:** Complete — superseded by entry above. Details preserved below.
+
+**Status at that point:** In progress (branch: stage-5-room-detail). Parts 1–2 complete.
 
 **LightTile redesign (commit `582faab`):**
 - Card-as-brightness-drag with Hue/iOS-style warm radial glow that scales with

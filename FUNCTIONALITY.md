@@ -1,5 +1,35 @@
 # Functionality Tracker
 
+## Pre-Stage 6: UI polish + home screen + colour sheet
+
+- [x] `HomeScreen`: `/home` as default app entry point — greeting (time-of-day + firstName), weather widget (HA `weather.*` entity), active summary pills (lights on count, temperature sensor, unlocked locks), favourite rooms horizontal scroll (default first 3 from config, or `homeFavourites` pref), quick scenes pill buttons (1.5s flash feedback, calls `scene.turn_on`), now playing section (media_player in "playing" state)
+- [x] `BottomNav`: 5 tabs with filled SVG icons — Home (house), Rooms (grid), Scenes (star), Cameras (camera), Settings (gear)
+- [x] `useClock` hook: `new Date()` updated every 60s via `setInterval`
+- [x] `homeFavourites` in preferences store: `null` = show first 3 rooms; array of room IDs otherwise; persisted via `savePreference("home_favourites", ...)`
+- [x] Shared `Header` hidden on `/home` route; HomeScreen owns its own header row
+- [x] `LightTile` full colour control: `resolveMode()` returns onoff/brightness/color_temp/hs/combo; card-as-drag-brightness with warm radial glow (0.55 alpha, scales with `brightnessPct`); colour bottom sheet (75svh, spring animation, primary-tint top border)
+- [x] Bottom sheet contents: temperature strip (warm→cool gradient, 32px track), swatch sections (Saved horizontal row with 48px circles + names, Colours 3×3 grid), custom H/S picker
+- [x] Active swatch: scale(1.1) + white ring box-shadow + 0.6 opacity on inactive + checkmark overlay SVG
+- [x] Tap ripple: scale(0.92) flash on swatch press via `flashKey` state
+- [x] Inline name input for saving favourites: button → input field (pre-filled, Enter/Escape, max 6 favourites total)
+- [x] Long-press 500ms context menu: action sheet at bottom of colour sheet with Rename and Delete options
+- [x] Inline rename: replaces swatch name label with text input; on confirm calls `onRemoveFavourite` + `onAddFavourite`
+- [x] Floating kelvin label: appears above temp slider thumb while dragging, disappears 1s after release
+- [x] X close button: top-right of sheet panel (aria-label="Close")
+- [x] Swipe-to-dismiss guard: handle drag only dismisses when `sheetScrollRef.scrollTop === 0`
+- [x] Optimistic colour preview: swatch tap immediately updates tile colour circle via local state; clears after 5s
+- [x] LightTile onoff card: centred power icon + name + ON/OFF text; primary-20% tint when on
+- [x] LightTile colour card: power icon top-right, colour circle bottom-left, brightness badge bottom-right
+- [x] `SensorTile`: 32px Barlow value, 11px muted caps name, `min-h-[160px]`
+- [x] `ClimateTile`: current°→target° inline with arrow, colour-coded pill badges (orange/blue/grey), ±44px full-width buttons
+- [x] `SkeletonTile`: `min-h-[160px]`, `rounded-2xl` (was `h-24 rounded-xl`)
+- [x] `RoomDetail`: `flex flex-col gap-3`, 13px muted caps heading, `h-px` divider after heading
+- [x] ha-core preferences API: `preferences(site_id, key, value, updated_at)` SQLite table; `GET /preferences`, `GET /preferences/:key`, `POST /preferences/:key`; UPSERT on conflict; value is JSON text
+- [x] `usePreferencesStore`: `hydrate()` seeds from `/api/preferences`; `addFavourite`/`removeFavourite`; `saveRoomDefault`/`clearRoomDefault`; `setHomeFavourites`
+- [x] Room default brightness: slider in RoomDetail, Apply button calls `callService` for each light in room, clear button removes default
+- [x] 119 client-app unit tests; 84 ha-core tests (203 total)
+- Branch: `stage-5-room-detail`, HEAD `029f02f`
+
 ## Stage 5: room detail + entity tiles
 
 - [x] `react-router-dom` 7.17.0: URL-based navigation replacing useState tabs
