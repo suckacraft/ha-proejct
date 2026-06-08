@@ -2,6 +2,71 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-08 — Session close: documentation refresh + housekeeping
+
+**Status:** Complete (branch: stage-5-room-detail). Documentation-only session
+plus end-of-day housekeeping. No application logic changed.
+
+**Commits today, in order:**
+- `582faab` — enhance: LightTile full colour and temperature control
+- `7f8c11c` — fix: LightTile controls (toggle, drag brightness, colour tap)
+- `e216c63` — feat(ha-core): per-site preferences API (SQLite key/value store)
+- `d1cffd4` — feat(client-app): favourites and room defaults via preferences API
+- `504bf02` — polish: mobile UI (bottom sheet, tile designs, touch targets)
+- `e9eb8a9` — feat(client-app): home screen dashboard with bottom nav icons
+- `029f02f` — feat(client-app): colour sheet UX improvements
+- `2801685` — checkpoint: end of session (home screen, colour sheet polish, docs)
+- `8deeaed` — docs: full roadmap and documentation structural refresh (Stages 12-19)
+- `772eb64` — chore: gitignore test-results directory
+- (a closing checkpoint commit follows this entry: Stages 1-5.5 complete, docs
+  refreshed through Stage 19, LightTile polish in progress)
+
+**What was built (now complete and committed):**
+- ha-core complete (Stages 1-3.5): WebSocket client, entity normalisation
+  (118 real entities, 9 product domains + 29 passthrough), Express REST API,
+  normalised SSE stream, SQLite persistence + history, Backblaze B2 backup, and
+  the per-site preferences API.
+- client-app Stages 4-5.5: Vite 8 + React 19 + Tailwind 4 foundation, white-label
+  config, SSE-only useHA, Zustand entity store, React Router 7, TILE_MAP tile
+  registry, room detail + tiles.
+- LightTile full colour control: drag-brightness card + colour bottom sheet
+  (temperature strip, 3x3 swatches, custom hue/sat picker), all light modes.
+- Preferences API consumption: server-side favourites + room default brightness,
+  no localStorage.
+- Home screen dashboard (/home, default route): time-of-day greeting, weather
+  widget, active device summary, favourite rooms, quick scenes, now playing.
+- Colour sheet UX improvements: active swatch indication, inline save/rename,
+  long-press menu, floating kelvin label, optimistic preview.
+
+**Documentation refresh (commit `8deeaed`):**
+- FUNCTIONALITY.md rewritten (Complete / In Progress / Planned / Post-Stage-11).
+- Stage 5.5 home screen documented as delivered across the kickoff prompt,
+  pipeline queue, MCP schedule, and staff onboarding.
+- setup/SETUP.md known issues added (Tailwind 4 postcss, iOS Web Push, expanded
+  stale-ha-core restart steps), v1.5 update-log entry.
+- Provisioning, client handover, and managed-service docs updated.
+- Full Stage 12-19 roadmap added and verified identical across the three planning
+  docs.
+
+**Housekeeping this session:**
+- client.config.json: `firstName` "Josh" added manually (home screen greeting).
+- test-results/ added to .gitignore (`772eb64`).
+
+**What is in progress:**
+- LightTile mobile polish — bottom sheet 75% height, 3x3 swatch grid layout, 48px
+  touch targets, active colour indication. Non-blocking refinement on the
+  already-committed colour control.
+
+**Test evidence:**
+- `npm test --workspaces`: 119/119 client-app, 84/84 ha-core (6 live-HA
+  integration tests skipped), 203 passed total, 0 failures. operator-app has no
+  test script yet (skeleton until Stage 8).
+
+**Current branch:** stage-5-room-detail.
+
+**Next:** Complete LightTile mobile polish, verify at 375px in browser, then
+Stage 6 (scenes tab). Model: claude-sonnet-4-6. Effort: high.
+
 ## 2026-06-08 — Pre-Stage 6 UI polish + home screen
 
 **Status:** Complete (branch: stage-5-room-detail).

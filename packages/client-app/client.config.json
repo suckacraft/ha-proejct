@@ -1,5 +1,6 @@
 {
     "clientName": "Demo Home",
+    "firstName": "Josh",
     "logoUrl": "/logo.png",
     "colours": {
         "primary": "#2563eb",
