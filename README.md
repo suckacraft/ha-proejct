@@ -94,6 +94,17 @@ smarthome-platform/
 └── CLAUDE.md           # AI assistant rules
 ```
 
+## Quick Start
+
+1. Copy `.env.local.example` to `.env.local` and add your HA token
+2. Run: `.\scripts\dev.ps1`
+3. Open: http://localhost:5173
+
+To stop all services: `.\scripts\stop.ps1`  
+To check status: `.\scripts\status.ps1`
+
+---
+
 ## Dev Commands
 
 ```bash

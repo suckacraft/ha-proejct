@@ -3,6 +3,7 @@ packages/ha-core/data/
 dist/
 .env
 .env.*
+!.env.local.example
 *.log
 .DS_Store
 coverage/
@@ -10,3 +11,4 @@ test-results/
 .vite/
 ha-key.txt
 spike/.ha-token
+logs/
