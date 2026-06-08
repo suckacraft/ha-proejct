@@ -1,8 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { callService } from "../../lib/callService.js";
 
-// Preset colour swatches. Whites carry colorTemp for lights that support it;
-// all swatches carry hs as the fallback for hs-only lights.
 const PRESETS = [
   { label: "Warm White", bg: "hsl(38,80%,82%)", colorTemp: 2700, hs: [38, 40] },
   {
@@ -20,14 +18,8 @@ const PRESETS = [
   { label: "Pink", bg: "hsl(330,100%,65%)", hs: [330, 100] },
 ];
 
-// Derive a single mode string from the supportedColorModes array.
-// "combo" = both color_temp and hs/rgb supported.
-// Edge case: empty/absent modes with a non-null brightnessPct means the
-// device under-reports its capabilities — treat as brightness-capable.
 function resolveMode(modes, brightnessPct) {
   const m = modes ?? [];
-  // Any of these report a controllable colour. rgbw/rgbww/xy are full-colour
-  // modes that accept hs_color; treat them as colour-capable like hs/rgb.
   const hasHs =
     m.includes("hs") ||
     m.includes("rgb") ||
@@ -43,7 +35,6 @@ function resolveMode(modes, brightnessPct) {
   return "onoff";
 }
 
-// Returns true when swatch matches the light's current colour state.
 function isSwatchActive(swatch, hsColor, colorTempKelvin, mode) {
   if (swatch.colorTemp && mode !== "hs" && colorTempKelvin != null) {
     return Math.abs(colorTempKelvin - swatch.colorTemp) <= 100;
@@ -57,14 +48,12 @@ function isSwatchActive(swatch, hsColor, colorTempKelvin, mode) {
   return false;
 }
 
-// Warm radial glow that intensifies with brightness (Hue-style card bg).
 function cardGlow(isOn, pct) {
   if (!isOn) return "#1a1a1a";
-  const a = (((pct ?? 50) / 100) * 0.5).toFixed(2);
-  return `radial-gradient(ellipse 150% 110% at 50% 130%, rgba(255,185,75,${a}) 0%, #1a1a1a 65%)`;
+  const a = (((pct ?? 50) / 100) * 0.55).toFixed(2);
+  return `radial-gradient(ellipse 180% 150% at 50% 115%, rgba(255,185,75,${a}) 0%, #1a1a1a 60%)`;
 }
 
-// Map current light state to a display colour for the colour circle on card.
 function resolveColour(hsColor, colorTempKelvin) {
   if (hsColor) return `hsl(${hsColor[0]},${hsColor[1]}%,55%)`;
   if (colorTempKelvin) {
@@ -77,18 +66,29 @@ function resolveColour(hsColor, colorTempKelvin) {
   return "#fff8e7";
 }
 
-// Tailwind classes for styled range inputs in the colour sheet.
-// appearance-none removes browser chrome so the gradient track shows cleanly.
-const styledSlider =
-  "w-full h-2 rounded-full cursor-pointer appearance-none " +
-  "[&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:h-2 " +
-  "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-4 " +
-  "[&::-webkit-slider-thumb]:h-4 [&::-webkit-slider-thumb]:rounded-full " +
+// 24px track — hue and saturation sliders.
+const colourSlider =
+  "w-full h-6 rounded-full cursor-pointer appearance-none " +
+  "[&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:h-6 " +
+  "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 " +
+  "[&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full " +
   "[&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-md " +
-  "[&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:-mt-1 " +
-  "[&::-moz-range-thumb]:w-4 [&::-moz-range-thumb]:h-4 " +
+  "[&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:-mt-0.5 " +
+  "[&::-moz-range-thumb]:w-7 [&::-moz-range-thumb]:h-7 " +
   "[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white " +
   "[&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-md";
+
+// 32px track — colour temperature strip.
+const tempSlider =
+  "w-full h-8 rounded-full cursor-pointer appearance-none " +
+  "[&::-webkit-slider-runnable-track]:rounded-full [&::-webkit-slider-runnable-track]:h-8 " +
+  "[&::-webkit-slider-thumb]:appearance-none [&::-webkit-slider-thumb]:w-7 " +
+  "[&::-webkit-slider-thumb]:h-7 [&::-webkit-slider-thumb]:rounded-full " +
+  "[&::-webkit-slider-thumb]:bg-white [&::-webkit-slider-thumb]:shadow-lg " +
+  "[&::-webkit-slider-thumb]:cursor-pointer [&::-webkit-slider-thumb]:mt-0.5 " +
+  "[&::-moz-range-thumb]:w-7 [&::-moz-range-thumb]:h-7 " +
+  "[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white " +
+  "[&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-lg";
 
 export default function LightTile({
   entity,
@@ -129,23 +129,21 @@ export default function LightTile({
   const hasColour = mode === "hs" || mode === "color_temp" || mode === "combo";
   const dimmable = mode !== "onoff";
   const displayBrightness = draftBrightness ?? brightnessPct;
+  const currentColour = resolveColour(hsColor, colorTempKelvin);
 
-  // All swatches: favourites first, then presets.
-  const allSwatches = [
-    ...favourites.map((f) => ({
-      label: f.name,
-      bg:
-        f.type === "color_temp"
-          ? `hsl(${Math.round(38 - ((f.value - 2000) / 4500) * 20)},${Math.round(80 - ((f.value - 2000) / 4500) * 50)}%,${Math.round(82 - ((f.value - 2000) / 4500) * 20)}%)`
-          : `hsl(${f.value[0]},${f.value[1]}%,50%)`,
-      colorTemp: f.type === "color_temp" ? f.value : undefined,
-      hs: f.type === "hs" ? f.value : undefined,
-      isFavourite: true,
-    })),
-    ...PRESETS,
-  ];
+  const favSwatches = favourites.map((f) => ({
+    label: f.name,
+    bg:
+      f.type === "color_temp"
+        ? `hsl(${Math.round(38 - ((f.value - 2000) / 4500) * 20)},${Math.round(
+            80 - ((f.value - 2000) / 4500) * 50,
+          )}%,${Math.round(82 - ((f.value - 2000) / 4500) * 20)}%)`
+        : `hsl(${f.value[0]},${f.value[1]}%,50%)`,
+    colorTemp: f.type === "color_temp" ? f.value : undefined,
+    hs: f.type === "hs" ? f.value : undefined,
+    isFavourite: true,
+  }));
 
-  // Trigger CSS enter transition after sheet mounts in the DOM.
   useEffect(() => {
     if (sheetOpen) {
       const id = setTimeout(() => setSheetReady(true), 10);
@@ -178,8 +176,6 @@ export default function LightTile({
   }
 
   function tapSwatch(swatch) {
-    // Use color_temp for whites on lights that support it;
-    // fall back to hs_color for hs-only lights.
     if (swatch.colorTemp && mode !== "hs") {
       callService("light", "turn_on", {
         entity_id: entity.id,
@@ -212,9 +208,7 @@ export default function LightTile({
     }, 300);
   }
 
-  // ── Card vertical drag (brightness) / tap (toggle) ─────
   function handleCardPointerDown(e) {
-    // Let nested controls (power icon, colour circle) handle their own taps.
     if (e.target.closest("button, input")) return;
     dragRef.current = {
       y: e.clientY,
@@ -222,13 +216,12 @@ export default function LightTile({
       height: e.currentTarget.getBoundingClientRect().height || 1,
       moved: false,
     };
-    // Optional chaining: jsdom (tests) lacks setPointerCapture.
     e.currentTarget.setPointerCapture?.(e.pointerId);
   }
 
   function handleCardPointerMove(e) {
-    if (!dragRef.current || !dimmable) return; // onoff lights don't dim
-    const deltaY = dragRef.current.y - e.clientY; // up = positive = brighter
+    if (!dragRef.current || !dimmable) return;
+    const deltaY = dragRef.current.y - e.clientY;
     if (Math.abs(deltaY) > 6) {
       if (!dragRef.current.moved) {
         dragRef.current.moved = true;
@@ -250,29 +243,23 @@ export default function LightTile({
     setIsDragging(false);
     setDraftBrightness(null);
     if (!moved) {
-      // A tap (no drag) on a non-dimmable card toggles it. Dimmable cards
-      // toggle via the always-present power icon, so a stray tap is a no-op.
       if (!dimmable) toggle();
       return;
     }
     if (draft !== null && isOn) setBrightness(draft);
   }
 
-  // ── Sheet handle drag (drag-down to dismiss) ───────────
   function handleHandlePointerDown(e) {
     handleDragRef.current = { y: e.clientY };
-    if (sheetPanelRef.current) {
-      sheetPanelRef.current.style.transition = "none";
-    }
-    e.currentTarget.setPointerCapture(e.pointerId);
+    if (sheetPanelRef.current) sheetPanelRef.current.style.transition = "none";
+    e.currentTarget.setPointerCapture?.(e.pointerId);
   }
 
   function handleHandlePointerMove(e) {
     if (!handleDragRef.current) return;
     const delta = Math.max(0, e.clientY - handleDragRef.current.y);
-    if (sheetPanelRef.current) {
+    if (sheetPanelRef.current)
       sheetPanelRef.current.style.transform = `translateY(${delta}px)`;
-    }
   }
 
   function handleHandlePointerUp(e) {
@@ -286,176 +273,251 @@ export default function LightTile({
     if (delta > 80) closeSheet();
   }
 
-  // ── Derived styles ────────────────────────────────────
-  const cardStyle = {
+  const colourCardStyle = {
     background: cardGlow(isOn, displayBrightness),
     transition: isDragging ? "none" : "background 200ms ease",
     ...(isPulsing ? { animation: "pulse-ring 0.35s ease-out" } : {}),
   };
 
-  const currentColour = resolveColour(hsColor, colorTempKelvin);
-
-  // ── Shared card body ──────────────────────────────────
-  const cardBody = (
-    <>
-      {/* Top row: name + power icon (always present on every card) */}
-      <div className="flex items-start justify-between gap-1">
-        <span className="font-display text-sm font-semibold uppercase tracking-wider text-white leading-tight">
-          {entity.name}
-        </span>
-        <button
-          onClick={(e) => {
-            e.stopPropagation();
-            toggle();
-          }}
-          aria-label={isOn ? "Turn off" : "Turn on"}
-          className="shrink-0 min-h-[44px] min-w-[44px] flex items-start justify-end pt-0.5"
-        >
-          <svg
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="currentColor"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            className={`w-5 h-5 transition-colors ${isOn ? "text-white" : "text-white/25"}`}
-          >
-            <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-            <line x1="12" y1="2" x2="12" y2="12" />
-          </svg>
-        </button>
-      </div>
-
-      {/* Spacer */}
-      <div className="flex-1 min-h-[16px]" />
-
-      {/* Bottom row: colour circle + state badge */}
-      <div className="flex items-end justify-between gap-2">
-        {hasColour && isOn ? (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              openSheet();
-            }}
-            aria-label="Colour settings"
-            className="min-h-[44px] min-w-[44px] flex items-end justify-start -mb-1 -ml-1"
-          >
-            <span
-              className="w-7 h-7 rounded-full border-[1.5px] border-white/20 shrink-0 block"
-              style={{ background: currentColour }}
-            />
-          </button>
-        ) : (
-          <span />
-        )}
-        <span className="font-sans text-[11px] text-white/50 tabular-nums">
-          {isOn
-            ? displayBrightness !== null
-              ? `ON · ${displayBrightness}%`
-              : "ON"
-            : "OFF"}
-        </span>
-      </div>
-    </>
-  );
+  const onoffCardStyle = {
+    background: isOn
+      ? "color-mix(in srgb, var(--color-primary) 20%, transparent)"
+      : "#1a1a1a",
+    transition: "background 200ms ease",
+    ...(isPulsing ? { animation: "pulse-ring 0.35s ease-out" } : {}),
+  };
 
   return (
     <>
-      {/* ── Tile card (one variant; power icon always toggles) ── */}
+      {/* ── Tile card ──────────────────────────────────────────────── */}
       <div
-        className={`rounded-2xl border border-[--color-border] min-h-[120px] flex flex-col p-3 touch-none select-none ${
-          dimmable ? "cursor-ns-resize" : "cursor-pointer"
-        }`}
-        style={cardStyle}
+        className={[
+          "rounded-2xl border min-h-[160px] flex flex-col touch-none select-none",
+          mode === "onoff"
+            ? "items-center justify-center gap-2 p-4 cursor-pointer"
+            : "p-3 cursor-ns-resize",
+          isDragging ? "border-[--color-primary]" : "border-[--color-border]",
+        ].join(" ")}
+        style={mode === "onoff" ? onoffCardStyle : colourCardStyle}
         onPointerDown={handleCardPointerDown}
         onPointerMove={handleCardPointerMove}
         onPointerUp={handleCardPointerUp}
         onPointerCancel={handleCardPointerUp}
       >
-        {cardBody}
+        {mode === "onoff" ? (
+          <>
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                toggle();
+              }}
+              aria-label={isOn ? "Turn off" : "Turn on"}
+              className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+            >
+              <svg
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="2"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                className={`w-8 h-8 transition-colors ${isOn ? "text-white" : "text-white/25"}`}
+              >
+                <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                <line x1="12" y1="2" x2="12" y2="12" />
+              </svg>
+            </button>
+            <span className="font-display text-xs tracking-widest uppercase text-white/50 text-center leading-tight">
+              {entity.name}
+            </span>
+            <span className="font-sans text-[11px] text-white/30 tabular-nums">
+              {isOn ? "ON" : "OFF"}
+            </span>
+          </>
+        ) : (
+          <>
+            <div className="flex items-start justify-between gap-1">
+              <span className="font-display text-base font-semibold uppercase tracking-wider text-white leading-tight">
+                {entity.name}
+              </span>
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  toggle();
+                }}
+                aria-label={isOn ? "Turn off" : "Turn on"}
+                className="shrink-0 min-h-[44px] min-w-[44px] flex items-start justify-end pt-0.5"
+              >
+                <svg
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  className={`w-5 h-5 transition-colors ${isOn ? "text-white" : "text-white/25"}`}
+                >
+                  <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+                  <line x1="12" y1="2" x2="12" y2="12" />
+                </svg>
+              </button>
+            </div>
+            <div className="flex-1 min-h-[16px]" />
+            <div className="flex items-end justify-between gap-2">
+              {hasColour && isOn ? (
+                <button
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    openSheet();
+                  }}
+                  aria-label="Colour settings"
+                  className="min-h-[44px] min-w-[44px] flex items-end justify-start -mb-1 -ml-1"
+                >
+                  <span
+                    className="w-6 h-6 rounded-full border-[1.5px] border-white/20 shrink-0 block"
+                    style={{ background: currentColour }}
+                  />
+                </button>
+              ) : (
+                <span />
+              )}
+              <span className="font-sans text-[12px] text-white/50 tabular-nums">
+                {isOn
+                  ? displayBrightness !== null
+                    ? `ON · ${displayBrightness}%`
+                    : "ON"
+                  : "OFF"}
+              </span>
+            </div>
+          </>
+        )}
       </div>
 
-      {/* ── Colour bottom sheet ───────────────────────────── */}
+      {/* ── Colour bottom sheet ─────────────────────────────────────── */}
       {sheetOpen && (
         <div
           className="fixed inset-0 z-50 flex flex-col justify-end"
           style={{
-            transition: "opacity 200ms ease",
             opacity: sheetReady ? 1 : 0,
+            transition: "opacity 200ms ease",
           }}
           onClick={closeSheet}
         >
-          {/* Backdrop */}
-          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" />
-
-          {/* Sheet panel */}
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-[8px]" />
           <div
             ref={sheetPanelRef}
-            className="relative bg-[#161920] rounded-t-3xl border-t border-white/[0.06] flex flex-col gap-5 px-5 pb-10"
+            className="relative bg-[#13151f] rounded-t-3xl flex flex-col h-[75svh] max-h-[600px] w-full"
             style={{
-              transition: "transform 300ms cubic-bezier(0.34, 1.56, 0.64, 1)",
+              borderTop:
+                "2px solid color-mix(in srgb, var(--color-primary) 40%, transparent)",
+              transition: "transform 350ms cubic-bezier(0.34, 1.56, 0.64, 1)",
               transform: sheetReady ? "translateY(0)" : "translateY(100%)",
             }}
             onClick={(e) => e.stopPropagation()}
           >
             {/* Drag handle */}
             <div
-              className="flex justify-center pt-3 pb-1 touch-none cursor-grab active:cursor-grabbing"
+              className="flex justify-center pt-4 pb-2 touch-none cursor-grab active:cursor-grabbing shrink-0"
               onPointerDown={handleHandlePointerDown}
               onPointerMove={handleHandlePointerMove}
               onPointerUp={handleHandlePointerUp}
             >
-              <div className="w-10 h-1 rounded-full bg-white/20" />
+              <div className="w-16 h-1.5 rounded-full bg-white/20" />
             </div>
 
             {/* Light name */}
-            <span className="font-display text-[13px] uppercase tracking-widest text-white/40 -mb-3">
+            <span className="font-display text-[11px] uppercase tracking-widest text-white/40 px-4 pb-2 shrink-0">
               {entity.name}
             </span>
 
-            {/* Temperature strip */}
-            {(mode === "color_temp" || mode === "combo") && (
-              <div className="flex flex-col gap-2">
-                <div className="flex items-center justify-between">
-                  <span className="font-display text-[9px] tracking-widest uppercase text-white/30">
+            {/* Scrollable content */}
+            <div className="flex-1 overflow-y-auto px-4 pb-10 flex flex-col gap-5">
+              {/* Temperature strip */}
+              {(mode === "color_temp" || mode === "combo") && (
+                <div className="flex flex-col gap-2">
+                  <span className="font-display text-[10px] tracking-widest uppercase text-white/30">
                     Temperature
                   </span>
-                  <div className="flex items-center gap-1.5">
-                    <span className="w-1.5 h-1.5 rounded-full bg-[#ff8c3a]/70 shrink-0" />
-                    <div className="w-8 h-px bg-white/15" />
-                    <span className="w-1.5 h-1.5 rounded-full border border-[#cce0ff]/40 shrink-0" />
+                  <div className="flex items-center gap-2">
+                    <span className="font-display text-[10px] text-[#ff8c3a]/70 shrink-0 leading-none">
+                      Warm
+                    </span>
+                    <input
+                      type="range"
+                      min={minTemp}
+                      max={maxTemp}
+                      value={colorTempKelvin ?? minTemp}
+                      onChange={(e) => setColorTemp(Number(e.target.value))}
+                      aria-label="Color temperature"
+                      style={{
+                        background:
+                          "linear-gradient(to right, #ff8c3a 0%, #fffaf0 50%, #cce0ff 100%)",
+                      }}
+                      className={`${tempSlider} flex-1`}
+                    />
+                    <span className="font-display text-[10px] text-[#cce0ff]/70 shrink-0 leading-none">
+                      Cool
+                    </span>
                   </div>
                 </div>
-                <input
-                  type="range"
-                  min={minTemp}
-                  max={maxTemp}
-                  value={colorTempKelvin ?? minTemp}
-                  onChange={(e) => setColorTemp(Number(e.target.value))}
-                  aria-label="Color temperature"
-                  style={{
-                    background:
-                      "linear-gradient(to right, #ff8c3a 0%, #fffaf0 50%, #cce0ff 100%)",
-                  }}
-                  className={styledSlider}
-                />
-              </div>
-            )}
+              )}
 
-            {/* Colour swatches */}
-            {(mode === "hs" || mode === "combo") && (
-              <div className="flex flex-col gap-3">
-                <span className="font-display text-[9px] tracking-widest uppercase text-white/30">
-                  Colour
-                </span>
+              {/* Colour swatches + custom picker */}
+              {(mode === "hs" || mode === "combo") && (
+                <div className="flex flex-col gap-3">
+                  <span className="font-display text-[10px] tracking-widest uppercase text-white/30">
+                    Colour
+                  </span>
 
-                <div className="relative">
+                  {/* Favourites row */}
+                  {favSwatches.length > 0 && (
+                    <div className="flex gap-3 flex-wrap">
+                      {favSwatches.map((swatch) => {
+                        const active = isSwatchActive(
+                          swatch,
+                          hsColor,
+                          colorTempKelvin,
+                          mode,
+                        );
+                        return (
+                          <div key={swatch.label} className="relative">
+                            <button
+                              onClick={() => tapSwatch(swatch)}
+                              aria-label={swatch.label}
+                              aria-pressed={active}
+                              className={[
+                                "w-14 h-14 rounded-full block",
+                                active
+                                  ? "ring-2 ring-[--color-primary] ring-offset-2 ring-offset-[#13151f]"
+                                  : "",
+                              ].join(" ")}
+                              style={{ background: swatch.bg }}
+                            />
+                            {onRemoveFavourite && (
+                              <button
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  onRemoveFavourite(swatch.label);
+                                }}
+                                aria-label={`Remove ${swatch.label}`}
+                                className="absolute -top-1 -right-1 w-5 h-5 rounded-full bg-black/80 flex items-center justify-center text-white/60 text-[9px] leading-none active:text-white"
+                              >
+                                ×
+                              </button>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+
+                  {/* 3×3 preset grid */}
                   <div
-                    className="flex gap-2.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden"
+                    className="grid grid-cols-3 gap-3"
                     role="group"
                     aria-label="Colour presets"
                   >
-                    {allSwatches.map((swatch) => {
+                    {PRESETS.map((swatch) => {
                       const active = isSwatchActive(
                         swatch,
                         hsColor,
@@ -463,129 +525,118 @@ export default function LightTile({
                         mode,
                       );
                       return (
-                        <div key={swatch.label} className="relative shrink-0">
+                        <div
+                          key={swatch.label}
+                          className="flex items-center justify-center"
+                        >
                           <button
                             onClick={() => tapSwatch(swatch)}
                             aria-label={swatch.label}
                             aria-pressed={active}
-                            className="min-h-[44px] min-w-[44px] flex items-center justify-center"
-                          >
-                            <span
-                              className={[
-                                "w-9 h-9 rounded-full block",
-                                active
-                                  ? "ring-2 ring-white ring-offset-2 ring-offset-[#161920]"
-                                  : "",
-                              ].join(" ")}
-                              style={{ background: swatch.bg }}
-                            />
-                          </button>
-                          {swatch.isFavourite && onRemoveFavourite && (
-                            <button
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                onRemoveFavourite(swatch.label);
-                              }}
-                              aria-label={`Remove ${swatch.label}`}
-                              className="absolute top-1 right-0 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center text-white/50 text-[9px] leading-none active:text-white"
-                            >
-                              ×
-                            </button>
-                          )}
+                            className={[
+                              "w-14 h-14 rounded-full block",
+                              active
+                                ? "ring-2 ring-[--color-primary] ring-offset-2 ring-offset-[#13151f]"
+                                : "",
+                            ].join(" ")}
+                            style={{ background: swatch.bg }}
+                          />
                         </div>
                       );
                     })}
-
-                    {/* Custom colour button */}
-                    <button
-                      onClick={() => setCustomOpen((v) => !v)}
-                      aria-label={
-                        customOpen ? "Close custom colour" : "Custom colour"
-                      }
-                      className="shrink-0 min-h-[44px] px-3 flex items-center justify-center font-display text-[9px] tracking-widest uppercase text-white/30 active:text-white/60 whitespace-nowrap"
-                    >
-                      {customOpen ? "✕" : "Custom"}
-                    </button>
                   </div>
 
-                  {/* Right fade */}
-                  <div className="absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-[#161920] to-transparent pointer-events-none" />
+                  {/* Custom button */}
+                  <button
+                    onClick={() => setCustomOpen((v) => !v)}
+                    aria-label={
+                      customOpen ? "Close custom colour" : "Custom colour"
+                    }
+                    className="self-start min-h-[48px] flex items-center font-display text-[10px] tracking-widest uppercase text-white/30 active:text-white/60"
+                  >
+                    {customOpen ? "✕ Close" : "+ Custom"}
+                  </button>
+
+                  {/* Custom hue + saturation picker */}
+                  {customOpen && (
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-3">
+                        <span
+                          className="w-12 h-12 rounded-full shrink-0 border border-white/10 block"
+                          style={{
+                            background: `hsl(${draftHue},${draftSat}%,50%)`,
+                          }}
+                          aria-hidden="true"
+                        />
+                        <div className="flex flex-col gap-0.5">
+                          <span className="font-display text-[11px] text-white/40 tabular-nums">
+                            H {Math.round(draftHue)}°
+                          </span>
+                          <span className="font-display text-[11px] text-white/40 tabular-nums">
+                            S {Math.round(draftSat)}%
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="font-display text-[10px] tracking-widest uppercase text-white/30">
+                          Hue
+                        </span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={360}
+                          value={draftHue}
+                          onChange={(e) => setDraftHue(Number(e.target.value))}
+                          onPointerUp={applyCustom}
+                          aria-label="Hue"
+                          style={{
+                            background:
+                              "linear-gradient(to right,hsl(0,100%,50%),hsl(30,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%))",
+                          }}
+                          className={colourSlider}
+                        />
+                      </div>
+
+                      <div className="flex flex-col gap-1.5">
+                        <span className="font-display text-[10px] tracking-widest uppercase text-white/30">
+                          Saturation
+                        </span>
+                        <input
+                          type="range"
+                          min={0}
+                          max={100}
+                          value={draftSat}
+                          onChange={(e) => setDraftSat(Number(e.target.value))}
+                          onPointerUp={applyCustom}
+                          aria-label="Saturation"
+                          style={{
+                            background: `linear-gradient(to right,hsl(${draftHue},0%,50%),hsl(${draftHue},100%,50%))`,
+                          }}
+                          className={colourSlider}
+                        />
+                      </div>
+
+                      {onAddFavourite && (
+                        <button
+                          onClick={() =>
+                            onAddFavourite({
+                              name: `${Math.round(draftHue)}° ${Math.round(draftSat)}%`,
+                              type: "hs",
+                              value: [draftHue, draftSat],
+                            })
+                          }
+                          aria-label="Save colour to favourites"
+                          className="w-full min-h-[48px] flex items-center justify-center gap-2 font-display text-[11px] tracking-widest uppercase text-white/40 active:text-white border border-white/10 rounded-xl"
+                        >
+                          ★ Save to Favourites
+                        </button>
+                      )}
+                    </div>
+                  )}
                 </div>
-
-                {/* Custom hue + saturation picker */}
-                {customOpen && (
-                  <div className="flex flex-col gap-3">
-                    <div className="flex items-center gap-3">
-                      <span
-                        aria-hidden="true"
-                        className="w-8 h-8 rounded-full shrink-0 border border-white/10"
-                        style={{
-                          background: `hsl(${draftHue},${draftSat}%,50%)`,
-                        }}
-                      />
-                      <span className="font-sans text-[11px] text-white/30 tabular-nums">
-                        {Math.round(draftHue)}° / {Math.round(draftSat)}%
-                      </span>
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <span className="font-display text-[9px] tracking-widest uppercase text-white/30">
-                        Hue
-                      </span>
-                      <input
-                        type="range"
-                        min={0}
-                        max={360}
-                        value={draftHue}
-                        onChange={(e) => setDraftHue(Number(e.target.value))}
-                        onPointerUp={applyCustom}
-                        aria-label="Hue"
-                        style={{
-                          background:
-                            "linear-gradient(to right,hsl(0,100%,50%),hsl(30,100%,50%),hsl(60,100%,50%),hsl(120,100%,50%),hsl(180,100%,50%),hsl(240,100%,50%),hsl(300,100%,50%),hsl(360,100%,50%))",
-                        }}
-                        className={styledSlider}
-                      />
-                    </div>
-
-                    <div className="flex flex-col gap-1.5">
-                      <span className="font-display text-[9px] tracking-widest uppercase text-white/30">
-                        Saturation
-                      </span>
-                      <input
-                        type="range"
-                        min={0}
-                        max={100}
-                        value={draftSat}
-                        onChange={(e) => setDraftSat(Number(e.target.value))}
-                        onPointerUp={applyCustom}
-                        aria-label="Saturation"
-                        style={{
-                          background: `linear-gradient(to right,hsl(${draftHue},0%,50%),hsl(${draftHue},100%,50%))`,
-                        }}
-                        className={styledSlider}
-                      />
-                    </div>
-
-                    {onAddFavourite && (
-                      <button
-                        onClick={() =>
-                          onAddFavourite({
-                            name: `${Math.round(draftHue)}° ${Math.round(draftSat)}%`,
-                            type: "hs",
-                            value: [draftHue, draftSat],
-                          })
-                        }
-                        aria-label="Save colour to favourites"
-                        className="self-start font-display text-[9px] tracking-widest uppercase text-white/30 active:text-white/60"
-                      >
-                        ♥ Save to favourites
-                      </button>
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+              )}
+            </div>
           </div>
         </div>
       )}

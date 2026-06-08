@@ -15,47 +15,52 @@ export default function ClimateTile({ entity }) {
     });
   }
 
+  const badgeClass =
+    hvacMode === "heat"
+      ? "bg-orange-500/20 text-orange-400"
+      : hvacMode === "cool"
+        ? "bg-blue-500/20 text-blue-400"
+        : "bg-gray-500/20 text-gray-400";
+
   return (
-    <div className="bg-surface rounded-xl p-4 border border-[--color-border] flex flex-col gap-3">
+    <div className="bg-surface rounded-2xl p-3 border border-[--color-border] flex flex-col gap-3 min-h-[160px]">
       <div className="flex items-start justify-between gap-2">
-        <span className="font-display text-base font-semibold tracking-wide uppercase text-white leading-tight">
+        <span className="font-display text-[11px] uppercase tracking-widest text-white/40 leading-none">
           {entity.name}
         </span>
         <span
-          className={[
-            "font-display text-xs font-semibold tracking-widest uppercase px-2 py-0.5 rounded",
-            hvacMode === "heat"
-              ? "bg-orange-500/20 text-orange-400"
-              : hvacMode === "cool"
-                ? "bg-blue-500/20 text-blue-400"
-                : hvacMode === "off"
-                  ? "bg-white/10 text-white/30"
-                  : "bg-white/10 text-white/60",
-          ].join(" ")}
+          className={`${badgeClass} font-display text-[10px] tracking-widest uppercase px-2.5 py-1 rounded-full shrink-0`}
         >
           {hvacMode}
         </span>
       </div>
-      {currentTemperature !== null && (
-        <span className="font-sans text-xs text-white/40">
-          Current: {currentTemperature}°
+
+      <div className="flex items-center gap-2 flex-1">
+        {currentTemperature !== null && (
+          <>
+            <span className="font-display text-[28px] text-white/40 tabular-nums leading-none">
+              {currentTemperature}°
+            </span>
+            <span className="text-white/20 text-lg leading-none">→</span>
+          </>
+        )}
+        <span className="font-display text-[28px] font-bold text-white tabular-nums leading-none">
+          {targetTemperature !== null ? `${targetTemperature}°` : "—"}
         </span>
-      )}
-      <div className="flex items-center justify-between gap-2">
+      </div>
+
+      <div className="flex items-center gap-2">
         <button
           onClick={() => adjustTemp(-1)}
           aria-label="Decrease temperature"
-          className="flex items-center justify-center rounded-lg bg-white/10 text-white font-display text-xl font-bold active:bg-white/20 min-h-[44px] min-w-[44px]"
+          className="flex-1 min-h-[44px] flex items-center justify-center rounded-xl bg-white/10 text-white font-display text-2xl font-bold active:bg-white/20"
         >
           −
         </button>
-        <span className="font-display text-2xl font-bold text-white tabular-nums">
-          {targetTemperature !== null ? `${targetTemperature}°` : "—"}
-        </span>
         <button
           onClick={() => adjustTemp(1)}
           aria-label="Increase temperature"
-          className="flex items-center justify-center rounded-lg bg-white/10 text-white font-display text-xl font-bold active:bg-white/20 min-h-[44px] min-w-[44px]"
+          className="flex-1 min-h-[44px] flex items-center justify-center rounded-xl bg-white/10 text-white font-display text-2xl font-bold active:bg-white/20"
         >
           +
         </button>

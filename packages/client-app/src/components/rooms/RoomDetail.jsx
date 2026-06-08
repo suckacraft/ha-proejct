@@ -49,10 +49,11 @@ export default function RoomDetail({ rooms = [] }) {
   }
 
   return (
-    <div className="p-4 space-y-3">
-      <h2 className="font-display text-sm font-semibold tracking-widest uppercase text-white/40 pt-1">
+    <div className="p-4 flex flex-col gap-3">
+      <h2 className="font-display text-[13px] tracking-widest uppercase text-white/40">
         {room.name}
       </h2>
+      <div className="h-px bg-[--color-border]" />
 
       {/* Room default brightness */}
       {persistedDefault !== null ? (

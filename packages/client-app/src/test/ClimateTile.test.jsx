@@ -42,7 +42,7 @@ describe("ClimateTile", () => {
 
   it("shows current temperature", () => {
     render(<ClimateTile entity={CLIMATE} />);
-    expect(screen.getByText(/Current: 24/)).toBeInTheDocument();
+    expect(screen.getByText("24°")).toBeInTheDocument();
   });
 
   it("shows target temperature", () => {
