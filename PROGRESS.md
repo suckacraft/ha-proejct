@@ -2,6 +2,35 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-08 — Stage 4: client-app foundation
+
+**Status:** Complete (branch: stage-4-client-app)
+
+**Decisions:**
+- Tailwind v4 requires `@tailwindcss/vite` plugin, not PostCSS -- JS config file
+  deleted, `@import "tailwindcss"` + `@theme {}` replaces `@tailwind` directives
+- White-label primary colour injected at runtime via `document.documentElement.style
+  .setProperty('--color-primary', ...)` after loadConfig(); @theme provides the
+  compile-time fallback only
+- ha-core `wireEvents` refactored to accept (client, sse) params and now normalises
+  `new_state` before broadcast -- SSE clients always receive the internal envelope,
+  never raw HA attributes
+- Tab state (useState) chosen over react-router for Stage 4 shell -- router deferred
+  to Stage 5 when room detail views need real URLs
+- vite-plugin-pwa 1.3.0 added now; icons and offline/caching strategy deferred to
+  Stage 11 provisioning; `GenerateSW` mode with note to migrate to `InjectManifest`
+- Vite proxy strips `/api` prefix: client calls `/api/entities`, proxy forwards to
+  `http://localhost:3001/entities` -- same URL shape in Docker and local dev
+- Zustand store holds entities as `Map<id, entity>`; config is module-level (not
+  reactive) since it is read-once at startup
+- client.config.json blocked by write-protect hook -- dummy rooms must be added
+  manually before running the dev server
+
+**Test evidence:**
+- 13/13 client-app unit tests pass (config, store, useHA, App shell render)
+- 68/68 ha-core tests pass (3 new SSE normalisation tests + 65 existing)
+- 81 total tests across workspace
+
 ## 2026-06-08 — Stage 3.5: ha-core persistence and backup
 
 **Status:** Complete (branch: stage-1-ws-client, commit 276b91f)

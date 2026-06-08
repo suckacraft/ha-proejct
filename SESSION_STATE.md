@@ -4,34 +4,34 @@ This file is updated automatically at every checkpoint and stage
 completion. If starting a new session, read this file first.
 
 ## Current stage
-Stage 4 (client-app foundation) -- NOT STARTED
+Stage 4 (client-app foundation) -- COMPLETE
 
 ## Last completed
-Stage 3.5 complete and merged. ha-core is fully built:
-- Stage 1: HA WebSocket client (ws-client.js) -- auth, reconnect, cache
-- Stage 2: entity normalisation (entities.js) -- 9 domains, stable contract
-- Stage 3: REST API + SSE + Express (api.js, events.js, index.js)
-- Stage 3.5: SQLite persistence + B2 backup (db.js, backup.js)
-All merged to main (commit 42fa2e7). 65/65 tests pass.
+Stage 4 complete. client-app foundation built on branch stage-4-client-app:
+- loadConfig() + CSS var white-label injection (--color-primary)
+- Zustand entity store (Map, setEntity, removeEntity)
+- useHA hook (EventSource /api/events, callService POST)
+- App shell: Header, BottomNav (tab state), RoomList (2-col grid)
+- PWA: vite-plugin-pwa manifest + @tailwindcss/vite v4 migration
+- Vite proxy /api → localhost:3001
+- ha-core: wireEvents now normalises before SSE broadcast
+- 81 tests pass (68 ha-core + 13 client-app)
+Branch not yet merged to main.
 
 ## In progress
-Nothing. Branch stage-4-client-app has been cut from main but no code written.
+Nothing.
 
 ## Next action
-Stage 4: client-app foundation.
-Files to build in packages/client-app/src/:
-- client.config.json reader (already has placeholder at packages/client-app/client.config.json
-  with clientName, logoUrl, colours, rooms:[])
-- Zustand entity store
-- useHA custom hook: SSE consumer at /events (NOT WebSocket), REST commands via
-  fetch to ha-core at http://localhost:3001
-- PWA manifest + service worker stub
-- App shell: dark editorial aesthetic, bottom nav (Rooms, Scenes, Cameras, Settings),
-  client logo in header, primary colour from config as CSS variable
-- Tailwind CSS dark theme configuration
-
-Test: render app shell with placeholder room list from client.config.json.
+Stage 5: room detail view and entity tiles (lights, switches, sensors, climate).
+Files to build: src/components/rooms/RoomDetail.jsx, src/components/devices/ tiles.
 MCP: Filesystem only. Model: Sonnet 4.6. Effort: high.
+
+IMPORTANT for new session:
+- client.config.json rooms array has 3 dummy rooms (Living Room, Bedroom, Kitchen)
+  added for dev testing
+- Vite proxy strips /api prefix before forwarding to ha-core port 3001
+- Tailwind 4 uses @tailwindcss/vite plugin (NOT postcss), no tailwind.config.js
+- --color-primary CSS var is set at runtime by loadConfig(), overrides @theme default
 
 IMPORTANT for new session:
 - Read packages/client-app/package.json to check existing deps
@@ -42,9 +42,9 @@ IMPORTANT for new session:
 - REST commands are POST http://localhost:3001/services/:domain/:service
 
 ## Open decisions
-- client.config.json rooms array is currently empty -- Stage 4 populates it
-  with dummy rooms for the test, Stage 11 populates it for real clients
-- ha-mcp still needs Claude Code restart to load (not needed until Stage 7)
+- client.config.json rooms are blocked by a write-protect hook -- add dummy rooms
+  manually for dev testing (see Next action above for schema)
+- ha-mcp removed from MCP config (not needed until Stage 7)
 
 ## Branch state
 - main: 42fa2e7 (merge commit, ha-core Stages 1-3.5)

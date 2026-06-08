@@ -11,6 +11,7 @@ import sseManager from "./events.js";
 import { createRouter } from "./api.js";
 import { recordSiteEvent, recordDeviceHistory, pruneOldRecords } from "./db.js";
 import { runBackup } from "./backup.js";
+import { normaliseEntity, isInternalEntity } from "./entities.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -48,9 +49,15 @@ export function createApp() {
 }
 
 // Wire ws-client events into SSE broadcast and DB recording.
-function wireEvents() {
-  wsClient.on("state_changed", (event) => {
-    sseManager.broadcast("state_changed", event);
+// Exported for unit testing with injectable deps.
+export function wireEvents(client, sse) {
+  client.on("state_changed", (event) => {
+    if (event.new_state === null) {
+      sse.broadcast("state_changed", { id: event.entity_id, removed: true });
+    } else if (!isInternalEntity(event.entity_id)) {
+      const normalised = normaliseEntity(event.new_state);
+      if (normalised) sse.broadcast("state_changed", normalised);
+    }
     recordDeviceHistory(
       event.entity_id,
       event.new_state?.state ?? "unavailable",
@@ -58,17 +65,17 @@ function wireEvents() {
     );
   });
 
-  wsClient.on("connected", () => {
+  client.on("connected", () => {
     console.log("HA WebSocket connected");
     recordSiteEvent("ha_connected");
   });
 
-  wsClient.on("disconnected", () => {
+  client.on("disconnected", () => {
     console.log("HA WebSocket disconnected -- reconnecting...");
     recordSiteEvent("ha_disconnected");
   });
 
-  wsClient.on("error", (err) => {
+  client.on("error", (err) => {
     console.error("HA WebSocket error:", err.message);
   });
 }
@@ -97,7 +104,7 @@ if (process.argv[1] === fileURLToPath(import.meta.url)) {
   });
 
   sseManager.start();
-  wireEvents();
+  wireEvents(wsClient, sseManager);
   wsClient.connect();
 
   app.listen(port, () => {

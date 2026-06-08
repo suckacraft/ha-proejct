@@ -1,5 +1,19 @@
 # Functionality Tracker
 
+## Stage 4: client-app foundation
+
+- [x] `client.config.json` reader: `loadConfig()` fetches config, sets `--color-primary` CSS var on `:root`
+- [x] Zustand entity store: `Map<id, entity>`, `setEntity`, `removeEntity` actions
+- [x] `useHA` hook: EventSource `/api/events`, `state_changed` → setEntity/removeEntity, `callService()` POST
+- [x] PWA foundation: `vite-plugin-pwa` with manifest, `@tailwindcss/vite` v4 migration, Vite proxy `/api` → port 3001
+- [x] App shell: dark editorial aesthetic, Barlow Condensed + DM Sans, CSS var white-label theming
+- [x] Header: client name + logo from config
+- [x] Bottom nav: Rooms / Scenes / Cameras / Settings tab state
+- [x] RoomList: 2-col grid, room cards with entity count numeral
+- [x] ha-core: `wireEvents` exported + normalises `new_state` before SSE broadcast; internal entities filtered
+- [x] 13 client-app unit tests pass; 68 ha-core tests pass (81 total)
+- Branch: `stage-4-client-app`
+
 ## Stage 0: Project Scaffolding
 
 - [x] Monorepo structure with npm workspaces
