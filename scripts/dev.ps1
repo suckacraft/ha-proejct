@@ -161,7 +161,7 @@ try {
             if (-not $svcProcs.ContainsKey($svcName)) { continue }
             if (-not $svcProcs[$svcName].HasExited)   { continue }
 
-            Write-Host "  [$svcName] exited — relaunching..." -ForegroundColor Yellow
+            Write-Host "  [$svcName] exited - relaunching..." -ForegroundColor Yellow
             $cfg = $svcConfig[$svcName]
             Clear-Port $cfg.port
             Start-Sleep -Milliseconds 500
