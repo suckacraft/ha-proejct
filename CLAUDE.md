@@ -103,6 +103,24 @@
     Never silently lose progress by hitting the context limit.
     Never start a new stage if context is above 60% full.
 
+## Future Architecture Context
+
+Awareness only — do not implement now. Exists so no current decision closes off these paths.
+
+**Native apps (post Stage 11):** client-app will be rebuilt as React Native for iOS/Android. ha-core API is the backend for all surfaces. Never build anything into the PWA that assumes a browser environment. All state, preferences, and data must live in ha-core. No localStorage or browser-only APIs in shared logic.
+
+**Wall-mounted kiosk:** A kiosk-app package will be added. Different layout (always-on, no bottom nav, persistent camera feeds), same ha-core API. Design client-app components to be layout-agnostic where possible.
+
+**Multi-room audio:** OwnTone + HEOS bridge as a media domain in ha-core. MediaTile will expand to full now-playing, room routing, queue. Design MediaTile as a placeholder — do not hardcode media assumptions.
+
+**Energy monitoring:** Solar inverter integrations (Fronius, SolarEdge, Huawei, Sungrow, Goodwe, Enphase) as energy domain entities. ha-core normaliser already passes unknown domains through.
+
+**AI vision layer:** Frigate camera zones extended with vision API (Claude vision or similar) for garden/package/vehicle detection. ha-core automation layer, not a frontend change.
+
+**Franchise platform:** operator-app will support multi-tenant franchisee management. Auth in ha-core needs a role system: super-admin, franchisee-admin, technician, client. Design Stage 6.5 auth with this hierarchy in mind even if only super-admin is implemented now.
+
+**Post Stage 11 planned:** Stage 12: React Native client · Stage 13: Kiosk app · Stage 14: Energy dashboard · Stage 15: Multi-room audio · Stage 16: Franchisee management · Stage 17: AI vision · Stage 18: Visual automation builder.
+
 ## Common Commands
 
 ```bash

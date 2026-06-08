@@ -8,73 +8,353 @@ vi.mock("../lib/callService.js", () => ({
 
 import { callService } from "../lib/callService.js";
 
-const LIGHT_ON = {
-  id: "light.ceiling",
+// ── Fixtures ────────────────────────────────────────────────────────────
+const base = (attrs = {}, state = "on") => ({
+  id: "light.test",
   domain: "light",
-  name: "Ceiling",
-  state: "on",
-  attributes: { brightnessPct: 75 },
+  name: "Test Light",
+  state,
+  attributes: attrs,
   lastChanged: null,
-};
-
-const LIGHT_OFF = {
-  ...LIGHT_ON,
-  state: "off",
-  attributes: { brightnessPct: null },
-};
-
-beforeEach(() => {
-  vi.clearAllMocks();
 });
 
+// onoff: no supportedColorModes, brightnessPct=null → resolveMode returns "onoff"
+const ONOFF_ON = base({ brightnessPct: null });
+const ONOFF_OFF = base({ brightnessPct: null }, "off");
+
+// brightness-only
+const DIM_ON = base({ brightnessPct: 60, supportedColorModes: ["brightness"] });
+const DIM_OFF = base(
+  { brightnessPct: null, supportedColorModes: ["brightness"] },
+  "off",
+);
+
+// color_temp only
+const TEMP_ON = base({
+  brightnessPct: 80,
+  colorTempKelvin: 3000,
+  minColorTempKelvin: 2000,
+  maxColorTempKelvin: 6500,
+  supportedColorModes: ["color_temp"],
+});
+
+// hs colour only
+const HS_ON = base({
+  brightnessPct: 70,
+  hsColor: [240, 100],
+  supportedColorModes: ["hs"],
+});
+const HS_OFF = base(
+  { brightnessPct: null, hsColor: null, supportedColorModes: ["hs"] },
+  "off",
+);
+
+// combo: color_temp + hs
+const COMBO_ON = base({
+  brightnessPct: 75,
+  colorTempKelvin: 4000,
+  minColorTempKelvin: 2000,
+  maxColorTempKelvin: 6535,
+  hsColor: null,
+  supportedColorModes: ["color_temp", "hs"],
+});
+
+beforeEach(() => vi.clearAllMocks());
+
 describe("LightTile", () => {
+  // ── Rendering ──────────────────────────────────────────────────────
+
   it("shows entity name", () => {
-    render(<LightTile entity={LIGHT_ON} />);
-    expect(screen.getByText("Ceiling")).toBeInTheDocument();
+    render(<LightTile entity={ONOFF_ON} />);
+    expect(screen.getByText("Test Light")).toBeInTheDocument();
   });
 
-  it("shows brightness percentage when on", () => {
-    render(<LightTile entity={LIGHT_ON} />);
-    expect(screen.getByText("75%")).toBeInTheDocument();
+  it("shows OFF badge when off", () => {
+    render(<LightTile entity={ONOFF_OFF} />);
+    expect(screen.getByText("OFF")).toBeInTheDocument();
   });
 
-  it("shows Off when light is off", () => {
-    render(<LightTile entity={LIGHT_OFF} />);
-    expect(screen.getByText("Off")).toBeInTheDocument();
+  it("shows ON · X% badge when on with brightness", () => {
+    render(<LightTile entity={DIM_ON} />);
+    expect(screen.getByText("ON · 60%")).toBeInTheDocument();
   });
 
-  it("shows brightness slider when on and brightnessPct is set", () => {
-    render(<LightTile entity={LIGHT_ON} />);
-    expect(screen.getByRole("slider")).toBeInTheDocument();
+  it("shows ON badge (no %) when on without brightness (onoff mode)", () => {
+    render(<LightTile entity={ONOFF_ON} />);
+    expect(screen.getByText("ON")).toBeInTheDocument();
   });
 
-  it("hides brightness slider when off", () => {
-    render(<LightTile entity={LIGHT_OFF} />);
-    expect(screen.queryByRole("slider")).not.toBeInTheDocument();
+  // ── Card variant ───────────────────────────────────────────────────
+
+  it("onoff mode renders card as <button>", () => {
+    const { container } = render(<LightTile entity={ONOFF_ON} />);
+    expect(container.querySelector("button.rounded-2xl")).toBeInTheDocument();
   });
 
-  it("calls callService turn_off when toggled from on", () => {
-    render(<LightTile entity={LIGHT_ON} />);
-    fireEvent.click(screen.getByRole("button", { name: /turn off/i }));
+  it("non-onoff mode renders card as <div>", () => {
+    const { container } = render(<LightTile entity={DIM_ON} />);
+    expect(container.querySelector("div.rounded-2xl")).toBeInTheDocument();
+  });
+
+  it("non-onoff shows power icon toggle button when on", () => {
+    render(<LightTile entity={DIM_ON} />);
+    expect(
+      screen.getByRole("button", { name: "Turn off" }),
+    ).toBeInTheDocument();
+  });
+
+  it("non-onoff shows power icon toggle button when off", () => {
+    render(<LightTile entity={DIM_OFF} />);
+    expect(screen.getByRole("button", { name: "Turn on" })).toBeInTheDocument();
+  });
+
+  it("onoff card has no separate power icon button", () => {
+    render(<LightTile entity={ONOFF_ON} />);
+    // Power icon labels are exactly "Turn off"/"Turn on"; onoff card label is longer
+    expect(
+      screen.queryByRole("button", { name: "Turn off" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Turn on" }),
+    ).not.toBeInTheDocument();
+  });
+
+  // ── Toggle ─────────────────────────────────────────────────────────
+
+  it("tapping onoff card when on calls turn_off", () => {
+    render(<LightTile entity={ONOFF_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: /tap to turn off/i }));
     expect(callService).toHaveBeenCalledWith("light", "turn_off", {
-      entity_id: "light.ceiling",
+      entity_id: "light.test",
     });
   });
 
-  it("calls callService turn_on when toggled from off", () => {
-    render(<LightTile entity={LIGHT_OFF} />);
-    fireEvent.click(screen.getByRole("button", { name: /turn on/i }));
+  it("tapping onoff card when off calls turn_on", () => {
+    render(<LightTile entity={ONOFF_OFF} />);
+    fireEvent.click(screen.getByRole("button", { name: /tap to turn on/i }));
     expect(callService).toHaveBeenCalledWith("light", "turn_on", {
-      entity_id: "light.ceiling",
+      entity_id: "light.test",
     });
   });
 
-  it("calls callService turn_on with brightness_pct when slider changes", () => {
-    render(<LightTile entity={LIGHT_ON} />);
-    fireEvent.change(screen.getByRole("slider"), { target: { value: "50" } });
-    expect(callService).toHaveBeenCalledWith("light", "turn_on", {
-      entity_id: "light.ceiling",
-      brightness_pct: 50,
+  it("power icon (on) calls turn_off", () => {
+    render(<LightTile entity={DIM_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Turn off" }));
+    expect(callService).toHaveBeenCalledWith("light", "turn_off", {
+      entity_id: "light.test",
     });
+  });
+
+  it("power icon (off) calls turn_on", () => {
+    render(<LightTile entity={DIM_OFF} />);
+    fireEvent.click(screen.getByRole("button", { name: "Turn on" }));
+    expect(callService).toHaveBeenCalledWith("light", "turn_on", {
+      entity_id: "light.test",
+    });
+  });
+
+  // ── Colour circle visibility ───────────────────────────────────────
+
+  it("colour circle visible for color_temp light when on", () => {
+    render(<LightTile entity={TEMP_ON} />);
+    expect(
+      screen.getByRole("button", { name: "Colour settings" }),
+    ).toBeInTheDocument();
+  });
+
+  it("colour circle visible for hs light when on", () => {
+    render(<LightTile entity={HS_ON} />);
+    expect(
+      screen.getByRole("button", { name: "Colour settings" }),
+    ).toBeInTheDocument();
+  });
+
+  it("colour circle visible for combo light when on", () => {
+    render(<LightTile entity={COMBO_ON} />);
+    expect(
+      screen.getByRole("button", { name: "Colour settings" }),
+    ).toBeInTheDocument();
+  });
+
+  it("colour circle hidden for brightness-only light", () => {
+    render(<LightTile entity={DIM_ON} />);
+    expect(
+      screen.queryByRole("button", { name: "Colour settings" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("colour circle hidden when light is off", () => {
+    render(<LightTile entity={HS_OFF} />);
+    expect(
+      screen.queryByRole("button", { name: "Colour settings" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("colour circle hidden for onoff light", () => {
+    render(<LightTile entity={ONOFF_ON} />);
+    expect(
+      screen.queryByRole("button", { name: "Colour settings" }),
+    ).not.toBeInTheDocument();
+  });
+
+  // ── Bottom sheet: open and contents ───────────────────────────────
+
+  it("clicking colour circle opens the bottom sheet", () => {
+    render(<LightTile entity={TEMP_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    // Sheet is open when its specific controls are in the DOM
+    expect(
+      screen.getByRole("slider", { name: "Color temperature" }),
+    ).toBeInTheDocument();
+  });
+
+  it("sheet shows temperature slider for color_temp mode with correct range", () => {
+    render(<LightTile entity={TEMP_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    const slider = screen.getByRole("slider", { name: "Color temperature" });
+    expect(slider).toHaveAttribute("min", "2000");
+    expect(slider).toHaveAttribute("max", "6500");
+  });
+
+  it("sheet shows temperature slider for combo mode", () => {
+    render(<LightTile entity={COMBO_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    expect(
+      screen.getByRole("slider", { name: "Color temperature" }),
+    ).toBeInTheDocument();
+  });
+
+  it("sheet has no temperature slider for hs-only mode", () => {
+    render(<LightTile entity={HS_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    expect(
+      screen.queryByRole("slider", { name: "Color temperature" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("sheet shows swatch group for hs mode", () => {
+    render(<LightTile entity={HS_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    expect(
+      screen.getByRole("group", { name: "Colour presets" }),
+    ).toBeInTheDocument();
+  });
+
+  it("sheet shows swatch group for combo mode", () => {
+    render(<LightTile entity={COMBO_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    expect(
+      screen.getByRole("group", { name: "Colour presets" }),
+    ).toBeInTheDocument();
+  });
+
+  it("sheet has no swatch group for color_temp-only mode", () => {
+    render(<LightTile entity={TEMP_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    expect(
+      screen.queryByRole("group", { name: "Colour presets" }),
+    ).not.toBeInTheDocument();
+  });
+
+  // ── Service calls from sheet ───────────────────────────────────────
+
+  it("temperature slider change calls setColorTemp", () => {
+    render(<LightTile entity={TEMP_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.change(
+      screen.getByRole("slider", { name: "Color temperature" }),
+      {
+        target: { value: "4500" },
+      },
+    );
+    expect(callService).toHaveBeenCalledWith("light", "turn_on", {
+      entity_id: "light.test",
+      color_temp_kelvin: 4500,
+    });
+  });
+
+  it("Blue swatch tap sends hs_color", () => {
+    render(<LightTile entity={HS_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Blue" }));
+    expect(callService).toHaveBeenCalledWith("light", "turn_on", {
+      entity_id: "light.test",
+      hs_color: [240, 100],
+    });
+  });
+
+  it("Warm White tap on combo mode sends color_temp_kelvin", () => {
+    render(<LightTile entity={COMBO_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Warm White" }));
+    expect(callService).toHaveBeenCalledWith("light", "turn_on", {
+      entity_id: "light.test",
+      color_temp_kelvin: 2700,
+    });
+  });
+
+  it("Warm White tap on hs-only mode sends hs_color fallback", () => {
+    render(<LightTile entity={HS_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Warm White" }));
+    expect(callService).toHaveBeenCalledWith("light", "turn_on", {
+      entity_id: "light.test",
+      hs_color: [38, 40],
+    });
+  });
+
+  // ── Custom colour picker ───────────────────────────────────────────
+
+  it("Custom button reveals hue and saturation sliders", () => {
+    render(<LightTile entity={HS_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom colour" }));
+    expect(screen.getByRole("slider", { name: "Hue" })).toBeInTheDocument();
+    expect(
+      screen.getByRole("slider", { name: "Saturation" }),
+    ).toBeInTheDocument();
+  });
+
+  it("hue slider pointerup calls applyCustom with hs_color", () => {
+    render(<LightTile entity={HS_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom colour" }));
+    // HS_ON initial draftHue=240, draftSat=100 — pointerUp without changing fires applyCustom
+    fireEvent.pointerUp(screen.getByRole("slider", { name: "Hue" }));
+    expect(callService).toHaveBeenCalledWith("light", "turn_on", {
+      entity_id: "light.test",
+      hs_color: [240, 100],
+    });
+  });
+
+  it("saturation slider pointerup calls applyCustom with hs_color", () => {
+    render(<LightTile entity={HS_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom colour" }));
+    fireEvent.pointerUp(screen.getByRole("slider", { name: "Saturation" }));
+    expect(callService).toHaveBeenCalledWith("light", "turn_on", {
+      entity_id: "light.test",
+      hs_color: [240, 100],
+    });
+  });
+
+  // ── Favourites ─────────────────────────────────────────────────────
+
+  it("favourite swatches render and appear before preset swatches", () => {
+    const favs = [{ name: "My Scene", type: "hs", value: [90, 80] }];
+    render(<LightTile entity={HS_ON} favourites={favs} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    expect(
+      screen.getByRole("button", { name: "My Scene" }),
+    ).toBeInTheDocument();
+    const buttons = screen.getAllByRole("button");
+    const favIdx = buttons.findIndex(
+      (b) => b.getAttribute("aria-label") === "My Scene",
+    );
+    const wwIdx = buttons.findIndex(
+      (b) => b.getAttribute("aria-label") === "Warm White",
+    );
+    expect(favIdx).toBeGreaterThanOrEqual(0);
+    expect(favIdx).toBeLessThan(wwIdx);
   });
 });
