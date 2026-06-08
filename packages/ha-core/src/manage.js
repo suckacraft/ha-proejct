@@ -1,4 +1,4 @@
-import { readFileSync, existsSync } from "node:fs";
+import { readFileSync, writeFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
 import { Router } from "express";
@@ -8,6 +8,24 @@ const SERVER_START_TIME = Date.now();
 
 // Resolve to the monorepo root (src → ha-core → packages → root).
 const PROJECT_ROOT = join(__dirname, "..", "..", "..");
+const PIDS_PATH = join(PROJECT_ROOT, ".pids");
+
+function readPids() {
+  try {
+    if (!existsSync(PIDS_PATH)) return {};
+    return JSON.parse(readFileSync(PIDS_PATH, "utf8"));
+  } catch {
+    return {};
+  }
+}
+
+function clearPid(service) {
+  try {
+    const pids = readPids();
+    pids[service] = null;
+    writeFileSync(PIDS_PATH, JSON.stringify(pids, null, 2));
+  } catch {}
+}
 
 function checkHttp(url) {
   return new Promise((resolve) => {
@@ -87,7 +105,7 @@ export function createManageRouter({
         status: clientUp ? "running" : "stopped",
         uptime: null,
         url: "http://localhost:5173",
-        canRestart: false,
+        canRestart: true,
       },
       {
         name: "operator-app",
@@ -99,7 +117,7 @@ export function createManageRouter({
           : "not built",
         uptime: null,
         url: operatorBuilt ? "http://localhost:3002" : null,
-        canRestart: false,
+        canRestart: operatorBuilt,
       },
       {
         name: "home-assistant",
@@ -124,9 +142,25 @@ export function createManageRouter({
 
   router.post("/api/manage/restart/:service", (req, res) => {
     const { service } = req.params;
-    res.json({
-      message: `Cannot restart ${service} via API. It runs in its own terminal window. Close that window and run start.bat again.`,
-    });
+    const pids = readPids();
+    const pid = pids[service];
+    if (!pid) {
+      return res
+        .status(404)
+        .json({ message: `No PID for ${service}. Start dev.ps1 first.` });
+    }
+    try {
+      process.kill(pid);
+      clearPid(service);
+      res.json({
+        message: `Sent kill to ${service} (PID ${pid}). dev.ps1 will relaunch it.`,
+      });
+    } catch (err) {
+      clearPid(service);
+      res
+        .status(500)
+        .json({ message: `Failed to kill ${service}: ${err.message}` });
+    }
   });
 
   return router;

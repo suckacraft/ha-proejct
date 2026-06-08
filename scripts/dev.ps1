@@ -76,16 +76,31 @@ Write-Host 'Clearing existing processes...' -ForegroundColor DarkGray
 foreach ($port in @(3001, 5173, 5174, 5175, 5176, 3002)) { Clear-Port $port }
 
 # ── Launch services ──────────────────────────────────────────────────────────
-$procs = [System.Collections.Generic.List[System.Diagnostics.Process]]::new()
+$svcProcs = @{}
 
-$procs.Add((Start-Service 'ha-core'    'packages/ha-core'    (Join-Path $logDir 'ha-core.log')))
+$svcProcs['ha-core']    = Start-Service 'ha-core'    'packages/ha-core'    (Join-Path $logDir 'ha-core.log')
 Start-Sleep -Milliseconds 300
-$procs.Add((Start-Service 'client-app' 'packages/client-app' (Join-Path $logDir 'client-app.log')))
+$svcProcs['client-app'] = Start-Service 'client-app' 'packages/client-app' (Join-Path $logDir 'client-app.log')
 
 if ($operatorReady) {
     Start-Sleep -Milliseconds 300
-    $procs.Add((Start-Service 'operator-app' 'packages/operator-app' (Join-Path $logDir 'operator-app.log')))
+    $svcProcs['operator-app'] = Start-Service 'operator-app' 'packages/operator-app' (Join-Path $logDir 'operator-app.log')
 }
+
+# ── Write PIDs for management dashboard restart support ──────────────────────
+$pidsFile = Join-Path $ProjectRoot '.pids'
+
+function Write-Pids {
+    $opPid = if ($script:svcProcs.ContainsKey('operator-app')) { $script:svcProcs['operator-app'].Id } else { $null }
+    $map = [ordered]@{
+        'ha-core'      = $null
+        'client-app'   = $script:svcProcs['client-app'].Id
+        'operator-app' = $opPid
+    }
+    $map | ConvertTo-Json | Set-Content $script:pidsFile -Encoding utf8
+}
+
+Write-Pids
 
 # ── Status panel ─────────────────────────────────────────────────────────────
 function Write-StatusPanel([string]$ha, [string]$client, [string]$operator) {
@@ -132,19 +147,39 @@ if ($clStatus -eq 'RUNNING') {
     Start-Process 'http://localhost:5173'
 }
 
-# ── Hold until Ctrl+C, then stop all spawned processes ───────────────────────
+# ── Watch loop: auto-relaunch client-app / operator-app on exit ──────────────
+$svcConfig = @{
+    'client-app'   = @{ port = 5173; workspace = 'packages/client-app' }
+    'operator-app' = @{ port = 3002; workspace = 'packages/operator-app' }
+}
+
 try {
-    while ($true) { Start-Sleep -Seconds 2 }
+    while ($true) {
+        Start-Sleep -Seconds 2
+
+        foreach ($svcName in @('client-app', 'operator-app')) {
+            if (-not $svcProcs.ContainsKey($svcName)) { continue }
+            if (-not $svcProcs[$svcName].HasExited)   { continue }
+
+            Write-Host "  [$svcName] exited — relaunching..." -ForegroundColor Yellow
+            $cfg = $svcConfig[$svcName]
+            Clear-Port $cfg.port
+            Start-Sleep -Milliseconds 500
+            $svcProcs[$svcName] = Start-Service $svcName $cfg.workspace (Join-Path $logDir "$svcName.log")
+            Write-Pids
+        }
+    }
 } finally {
     Write-Host ''
     Write-Host 'Stopping services...' -ForegroundColor Yellow
-    foreach ($p in $procs) {
+    foreach ($entry in $svcProcs.GetEnumerator()) {
         try {
-            if (-not $p.HasExited) {
-                Stop-Process -Id $p.Id -Force
-                Write-Host "  Stopped PID $($p.Id)" -ForegroundColor Gray
+            if (-not $entry.Value.HasExited) {
+                Stop-Process -Id $entry.Value.Id -Force
+                Write-Host "  Stopped $($entry.Key) PID $($entry.Value.Id)" -ForegroundColor Gray
             }
         } catch {}
     }
+    if (Test-Path $pidsFile) { Remove-Item $pidsFile -Force }
     Write-Host 'Done.' -ForegroundColor Green
 }

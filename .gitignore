@@ -12,3 +12,4 @@ test-results/
 ha-key.txt
 spike/.ha-token
 logs/
+.pids
