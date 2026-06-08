@@ -16,8 +16,8 @@ Stage 5 complete. Branch stage-5-room-detail:
 - LightTile (toggle + brightness slider), SwitchTile (toggle), SensorTile (value + unit),
   ClimateTile (±1° buttons, HVAC badge), FallbackTile (read-only fallback)
 - callService: standalone function in src/lib/; throws on non-ok; no hook wrapper
-- useHA: SSE-only + /api/entities snapshot on mount to seed store immediately
-- 54 client-app tests pass; 68 ha-core tests pass (122 total)
+- useHA: SSE-only + /api/entities snapshot on mount; live SSE updates confirmed working in browser
+- 55 client-app tests pass; 68 ha-core tests pass (123 total)
 
 ## In progress
 Nothing.

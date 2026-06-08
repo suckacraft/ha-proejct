@@ -218,6 +218,22 @@ chars for Opus 4.8 with 200k tokens), and injects a compaction prompt back to
 Claude if fill exceeds 70% (compact) or 85% (checkpoint). This fires automatically
 on every response without Claude needing to self-report.
 
+### Issue: stale ha-core after commits — SSE updates stop working
+Date discovered: June 2026
+Symptom: Tiles show correct state on page load but do not update in real time.
+Toggling a device in HA or from the app requires a page refresh to see the change.
+Root cause: ha-core was started with node (not nodemon), or was started before a
+commit that changed src/index.js. The Stage 3.5 wireEvents broadcast the raw
+ws-client event shape { entity_id, new_state, old_state } directly over SSE.
+Stage 4 refactored wireEvents to normalise before broadcast. If the server is
+running Stage 3.5 code, useHA receives data.id === undefined and all SSE updates
+write to the wrong Zustand Map key — tiles never update live.
+Fix: Always restart ha-core after pulling new commits that touch ha-core/src/.
+  HASS_TOKEN=<token> npm run dev -w packages/ha-core
+The normalised SSE envelope is: { id, domain, name, state, attributes, lastChanged }
+NOT: { entity_id, new_state, old_state }
+This contract is verified by the wireEvents tests in ha-core/test/events.test.js.
+
 ### Issue: right-click Open PowerShell missing in Windows 11
 Date discovered: June 2026
 Symptom: No PowerShell option in right-click context menu
@@ -242,6 +258,7 @@ Fix option 3 (permanent): Run this in Administrator PowerShell to restore it:
 | June 2026 | v1.1 | Added -y flag to npx skills commands |
 | June 2026 | v1.2 | Fixed ha-mcp package name and env vars, fixed docker-compose for Windows, fixed skills agent targeting, added Demo integration auto-setup, direct .claude.json write for MCP config |
 | June 2026 | v1.3 | Added context-monitoring Stop hook to .claude/settings.json; documented CLAUDE.md rule 20 enforcement limitation |
+| June 2026 | v1.4 | Added stale ha-core gotcha: SSE stops working if server runs old code after a commit |
 
 ---
 

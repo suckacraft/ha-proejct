@@ -88,7 +88,11 @@ describe("useHA", () => {
     );
   });
 
-  it("calls setEntity on state_changed SSE event with entity payload", () => {
+  it("SSE state_changed updates store with normalized entity — live update without refresh", () => {
+    // This test encodes the real-time sync contract:
+    // ha-core broadcasts the normalized envelope { id, domain, name, state, attributes, lastChanged }
+    // NOT the raw HA shape { entity_id, new_state, old_state }.
+    // useHA must key the store by entity.id so tiles re-render without a page refresh.
     renderHook(() => useHA());
     const entity = {
       id: "light.ceiling",
@@ -103,9 +107,45 @@ describe("useHA", () => {
       MockEventSource.instance.emit("state_changed", entity);
     });
 
-    expect(useEntityStore.getState().entities.get("light.ceiling")).toEqual(
-      entity,
-    );
+    const stored = useEntityStore.getState().entities.get("light.ceiling");
+    expect(stored).toEqual(entity);
+    // Guard: raw HA fields must not be present — would indicate ha-core is not normalising
+    expect(stored).not.toHaveProperty("entity_id");
+    expect(stored).not.toHaveProperty("new_state");
+  });
+
+  it("SSE state_changed updates existing entity state without page refresh", () => {
+    // Seed store with initial state (simulates page load snapshot)
+    const initial = {
+      id: "light.ceiling",
+      domain: "light",
+      name: "Ceiling",
+      state: "off",
+      attributes: { brightnessPct: null },
+      lastChanged: "2026-06-08T10:00:00.000Z",
+    };
+    useEntityStore.setState({
+      entities: new Map([["light.ceiling", initial]]),
+    });
+
+    renderHook(() => useHA());
+
+    // SSE event arrives — device was turned on in HA
+    act(() => {
+      MockEventSource.instance.emit("state_changed", {
+        id: "light.ceiling",
+        domain: "light",
+        name: "Ceiling",
+        state: "on",
+        attributes: { brightnessPct: 70 },
+        lastChanged: "2026-06-08T10:00:05.000Z",
+      });
+    });
+
+    const updated = useEntityStore.getState().entities.get("light.ceiling");
+    expect(updated.state).toBe("on");
+    expect(updated.attributes.brightnessPct).toBe(70);
+    expect(updated.lastChanged).toBe("2026-06-08T10:00:05.000Z");
   });
 
   it("calls removeEntity when state_changed payload has removed: true", () => {

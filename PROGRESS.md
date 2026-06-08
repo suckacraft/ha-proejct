@@ -28,8 +28,9 @@ See also SESSION_STATE.md for quick-start context for new sessions.
   on 0.5° steps
 - RoomList and RoomDetail default rooms prop to [] — guards against malformed config
 
-**Bug fixed (post-review):**
-- `useHA` seeded no initial state — SSE only delivers future changes; store was empty at startup so all tiles rendered as SkeletonTile. Fixed by adding `fetch("/api/entities")` snapshot call on mount (EventSource opened first to avoid missing events during fetch window). Confirmed: tiles populate immediately on load. Commit: `e98c0c5`.
+**Bugs fixed (post-review):**
+- `useHA` seeded no initial state — SSE only delivers future changes; store was empty at startup so all tiles rendered as SkeletonTile. Fixed by adding `fetch("/api/entities")` snapshot call on mount (EventSource opened first to avoid missing events during fetch window). Commit: `e98c0c5`.
+- SSE real-time sync silent failure — ha-core had been running Stage 3.5 code (started before Stage 4 normalization commit, no nodemon watching, process never restarted). Stage 3.5 broadcast the raw ws-client event shape `{ entity_id, new_state, old_state }` directly. `useHA` expects the normalized envelope `{ id, ... }`, so `data.id` was always `undefined` and all SSE updates wrote to the wrong Map key. Fix: restart ha-core with Stage 4+ code — `wireEvents` already normalizes correctly. Root cause documented in SETUP.md Known Issues. Confirmed: toggles update tiles within 2 seconds, two-way HA↔app sync working without refresh.
 
 **Deferred:**
 - Site ID in API calls (Rule 4) — ha-core has no siteId middleware; Stage 6.5 (auth)
