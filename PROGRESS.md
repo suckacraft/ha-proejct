@@ -28,6 +28,9 @@ See also SESSION_STATE.md for quick-start context for new sessions.
   on 0.5° steps
 - RoomList and RoomDetail default rooms prop to [] — guards against malformed config
 
+**Bug fixed (post-review):**
+- `useHA` seeded no initial state — SSE only delivers future changes; store was empty at startup so all tiles rendered as SkeletonTile. Fixed by adding `fetch("/api/entities")` snapshot call on mount (EventSource opened first to avoid missing events during fetch window). Confirmed: tiles populate immediately on load. Commit: `e98c0c5`.
+
 **Deferred:**
 - Site ID in API calls (Rule 4) — ha-core has no siteId middleware; Stage 6.5 (auth)
 - SSE error handler / reconnect — Stage 6 (needs disconnect UI state too)

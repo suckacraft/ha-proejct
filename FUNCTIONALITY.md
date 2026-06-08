@@ -17,7 +17,8 @@
 - [x] `ClimateTile`: current temp, target temp, ±1° buttons → `climate.set_temperature`; HVAC mode badge; float-step safe
 - [x] `callService`: standalone async function in `src/lib/`; throws on non-ok responses
 - [x] `useHA`: simplified to SSE-only; `callService` extracted; URL contract pinned in tests
-- [x] 53 client-app unit tests pass; 68 ha-core tests pass (121 total)
+- [x] `useHA`: seeds Zustand store from `GET /api/entities` snapshot on mount; SSE delivers incremental updates from that point
+- [x] 54 client-app unit tests pass; 68 ha-core tests pass (122 total)
 - Branch: `stage-5-room-detail`
 
 ## Stage 4: client-app foundation
