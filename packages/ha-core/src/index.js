@@ -5,9 +5,12 @@ import express from "express";
 import cors from "cors";
 import morgan from "morgan";
 import helmet from "helmet";
+import { schedule } from "node-cron";
 import wsClient from "./ws-client.js";
 import sseManager from "./events.js";
 import { createRouter } from "./api.js";
+import { recordSiteEvent, recordDeviceHistory, pruneOldRecords } from "./db.js";
+import { runBackup } from "./backup.js";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
@@ -44,18 +47,25 @@ export function createApp() {
   return app;
 }
 
-// Wire ws-client state_changed events into the SSE broadcast.
+// Wire ws-client events into SSE broadcast and DB recording.
 function wireEvents() {
   wsClient.on("state_changed", (event) => {
     sseManager.broadcast("state_changed", event);
+    recordDeviceHistory(
+      event.entity_id,
+      event.new_state?.state ?? "unavailable",
+      event.old_state?.state ?? null,
+    );
   });
 
   wsClient.on("connected", () => {
     console.log("HA WebSocket connected");
+    recordSiteEvent("ha_connected");
   });
 
   wsClient.on("disconnected", () => {
     console.log("HA WebSocket disconnected -- reconnecting...");
+    recordSiteEvent("ha_disconnected");
   });
 
   wsClient.on("error", (err) => {
@@ -68,6 +78,23 @@ function wireEvents() {
 if (process.argv[1] === fileURLToPath(import.meta.url)) {
   const app = createApp();
   const port = haConfig.port ?? 3001;
+
+  // Prune stale records on startup, then nightly at 03:00.
+  pruneOldRecords();
+  schedule("0 3 * * *", () => {
+    pruneOldRecords();
+    console.log("History pruned");
+  });
+
+  // Nightly backup at 02:00.
+  schedule("0 2 * * *", async () => {
+    console.log("Starting nightly backup...");
+    const result = await runBackup(wsClient);
+    console.log(
+      "Backup result:",
+      result.ok ? "ok" : `failed -- ${result.error}`,
+    );
+  });
 
   sseManager.start();
   wireEvents();

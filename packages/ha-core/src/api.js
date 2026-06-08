@@ -5,6 +5,13 @@ import {
   getEntitiesByRoom,
 } from "./entities.js";
 import sseManager from "./events.js";
+import {
+  getSiteEvents,
+  getUptimeSummary,
+  getDeviceHistory,
+  getBackupHistory,
+} from "./db.js";
+import { runBackup } from "./backup.js";
 
 const START_TIME = Date.now();
 
@@ -85,6 +92,44 @@ export function createRouter({ wsClient, clientConfig, siteId }) {
 
   router.get("/events", (req, res) => {
     sseManager.addClient(res);
+  });
+
+  // -- History ----------------------------------------------------------------
+
+  router.get("/history/events", (req, res) => {
+    const { since, limit } = req.query;
+    res.json(
+      getSiteEvents({
+        since: since ?? null,
+        limit: limit ? parseInt(limit, 10) : 500,
+      }),
+    );
+  });
+
+  router.get("/history/uptime", (_req, res) => {
+    res.json(getUptimeSummary());
+  });
+
+  router.get("/history/device/:entityId", (req, res) => {
+    const { since, limit } = req.query;
+    res.json(
+      getDeviceHistory(req.params.entityId, {
+        since: since ?? null,
+        limit: limit ? parseInt(limit, 10) : 200,
+      }),
+    );
+  });
+
+  router.get("/history/backups", (_req, res) => {
+    res.json(getBackupHistory());
+  });
+
+  // -- Backup -----------------------------------------------------------------
+
+  router.post("/backup/run", async (_req, res) => {
+    const result = await runBackup(wsClient);
+    const status = result.ok ? 200 : 500;
+    res.status(status).json(result);
   });
 
   // -- Health -----------------------------------------------------------------
