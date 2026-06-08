@@ -20,7 +20,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);const p=(j.tool_input&&j.tool_input.file_path)||'';if(/(client\\.config\\.json|\\.env|config\\.json)$/.test(p)){process.stderr.write('BLOCK: Writing to '+p+' requires explicit approval. This file contains sensitive configuration.');process.exit(2);}}catch(e){}});\""
+            "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);const p=(j.tool_input&&j.tool_input.file_path)||'';const norm=p.replace(/\\\\/g,'/');if(/(packages\\/(client-app|operator-app)\\/client\\.config\\.json|\\.env)$/.test(norm)){process.stderr.write('BLOCK: Writing to '+p+' requires explicit approval. This file contains sensitive configuration.');process.exit(2);}}catch(e){}});\""
           }
         ]
       }

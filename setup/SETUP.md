@@ -252,6 +252,21 @@ Fix option 3 (permanent): Run this in Administrator PowerShell to restore it:
   New-Item -Path "$p\command" -Force
   Set-ItemProperty -Path "$p\command" -Name "(Default)" -Value 'powershell.exe -NoExit -Command "Set-Location -LiteralPath ''%V''"'
 
+### Issue: Write-protect hook matches config.json by filename, not path
+Date discovered: June 2026
+Symptom: Edit/Write to any file named config.json is blocked by the pre-tool hook,
+including template and provisioning files that should be freely editable.
+Root cause: The PreToolUse hook in .claude/settings.json used a filename-only regex
+(config\.json$) which matched all config.json files in the project regardless of path.
+Fix: Updated hook to match specific protected paths only:
+  packages/client-app/client.config.json
+  packages/operator-app/client.config.json
+  .env (exact match)
+Note: If you add new config.json files that should be editable (fixtures, templates,
+provisioning configs), no change is needed. If you add a new sensitive config file
+that must be write-protected, add its path to the regex in the PreToolUse hook in
+.claude/settings.json.
+
 ### Issue: PowerShell 5.1 script encoding -- avoid em dashes in strings
 Date discovered: June 2026
 Symptom: "The string is missing the terminator" parse error in PowerShell scripts.
@@ -299,6 +314,7 @@ notifications.
 | June 2026 | v1.4 | Added stale ha-core gotcha: SSE stops working if server runs old code after a commit |
 | June 2026 | v1.5 | Added Tailwind 4 postcss.config.js and iOS Web Push known issues; expanded the stale ha-core restart steps for PowerShell |
 | June 2026 | v1.6 | Added PowerShell 5.1 encoding gotcha: em dashes in string literals cause unterminated string parse errors |
+| June 2026 | v1.7 | Write-protect hook updated to path-specific matching; documented filename-pattern gotcha |
 
 ---
 
