@@ -1,6 +1,6 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
 // callService is now a standalone function in src/lib/callService.js — see callService.test.js
-import { renderHook, act } from "@testing-library/react";
+import { renderHook, act, waitFor } from "@testing-library/react";
 import { useHA } from "../hooks/useHA.js";
 import { useEntityStore } from "../store/entities.js";
 
@@ -33,6 +33,10 @@ MockEventSource.CLOSED = 2;
 
 beforeEach(() => {
   vi.stubGlobal("EventSource", MockEventSource);
+  vi.stubGlobal(
+    "fetch",
+    vi.fn().mockResolvedValue({ json: () => Promise.resolve([]) }),
+  );
   useEntityStore.setState({ entities: new Map() });
 });
 
@@ -44,6 +48,44 @@ describe("useHA", () => {
   it("opens EventSource on /api/events", () => {
     renderHook(() => useHA());
     expect(MockEventSource.instance.url).toBe("/api/events");
+  });
+
+  it("fetches /api/entities on mount and seeds the store", async () => {
+    const snapshot = [
+      {
+        id: "light.ceiling",
+        domain: "light",
+        name: "Ceiling",
+        state: "on",
+        attributes: { brightnessPct: 75 },
+        lastChanged: null,
+      },
+      {
+        id: "switch.fan",
+        domain: "switch",
+        name: "Fan",
+        state: "off",
+        attributes: {},
+        lastChanged: null,
+      },
+    ];
+    global.fetch.mockResolvedValue({
+      json: () => Promise.resolve(snapshot),
+    });
+
+    renderHook(() => useHA());
+
+    await waitFor(() => {
+      expect(useEntityStore.getState().entities.size).toBe(2);
+    });
+
+    expect(fetch).toHaveBeenCalledWith("/api/entities");
+    expect(useEntityStore.getState().entities.get("light.ceiling")?.name).toBe(
+      "Ceiling",
+    );
+    expect(useEntityStore.getState().entities.get("switch.fan")?.name).toBe(
+      "Fan",
+    );
   });
 
   it("calls setEntity on state_changed SSE event with entity payload", () => {
