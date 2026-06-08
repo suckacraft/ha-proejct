@@ -12,6 +12,7 @@ import { useHA } from "./hooks/useHA.js";
 import { usePreferences } from "./hooks/usePreferences.js";
 import Header from "./components/shared/Header.jsx";
 import BottomNav from "./components/shared/BottomNav.jsx";
+import HomeScreen from "./components/home/HomeScreen.jsx";
 import RoomList from "./components/rooms/RoomList.jsx";
 import RoomDetail from "./components/rooms/RoomDetail.jsx";
 
@@ -38,18 +39,32 @@ function AppContent() {
 
   if (!config) return null;
 
+  const isHome = location.pathname === "/home";
   const isRoomDetail = /^\/rooms\/.+/.test(location.pathname);
 
   return (
     <div className="flex flex-col h-dvh bg-canvas text-white font-sans overflow-hidden">
-      <Header
-        clientName={config.clientName}
-        logoUrl={config.logoUrl}
-        onBack={isRoomDetail ? () => navigate(-1) : undefined}
-      />
+      {!isHome && (
+        <Header
+          clientName={config.clientName}
+          logoUrl={config.logoUrl}
+          onBack={isRoomDetail ? () => navigate(-1) : undefined}
+        />
+      )}
       <main className="flex-1 overflow-y-auto">
         <Routes>
-          <Route path="/" element={<Navigate to="/rooms" replace />} />
+          <Route path="/" element={<Navigate to="/home" replace />} />
+          <Route
+            path="/home"
+            element={
+              <HomeScreen
+                rooms={config.rooms}
+                scenes={config.scenes ?? []}
+                clientName={config.clientName}
+                firstName={config.firstName}
+              />
+            }
+          />
           <Route path="/rooms" element={<RoomList rooms={config.rooms} />} />
           <Route
             path="/rooms/:roomId"
