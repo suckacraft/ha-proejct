@@ -1,0 +1,8 @@
+{
+  "homeAssistant": {
+    "url": "http://localhost:8123",
+    "token": "YOUR_LONG_LIVED_ACCESS_TOKEN"
+  },
+  "siteId": "site-001",
+  "port": 3001
+}

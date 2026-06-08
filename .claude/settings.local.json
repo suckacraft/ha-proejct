@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dir:*)",
+      "Bash(docker:*)",
+      "Bash(git init:*)",
+      "Bash(npm view:*)",
+      "Bash(node:*)",
+      "Bash(cd:*)"
+    ]
+  }
+}

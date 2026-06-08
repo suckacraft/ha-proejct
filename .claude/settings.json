@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "node -e \"const path = process.env.CLAUDE_FILE_PATH || ''; if (path.match(/\\.(js|jsx)$/)) { require('child_process').execSync('npx prettier --write ' + JSON.stringify(path), {stdio: 'inherit'}); }\"",
+        "description": "Auto-format JS/JSX files with Prettier after edit/write"
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Edit|Write",
+        "command": "node -e \"const path = process.env.CLAUDE_FILE_PATH || ''; if (path.match(/(client\\.config\\.json|\\.env|config\\.json)$/)) { process.stderr.write('BLOCK: Writing to ' + path + ' requires explicit approval. This file contains sensitive configuration.'); process.exit(2); }\"",
+        "description": "Block writes to sensitive config files without approval"
+      }
+    ],
+    "Stop": [
+      {
+        "command": "node -e \"const input = require('fs').readFileSync(0, 'utf8'); if (input.includes('test') && !input.includes('PASS') && !input.includes('passing') && !input.includes('Tests:')) { process.stderr.write('WARNING: Tests were mentioned but no evidence of passing tests was shown.'); }\"",
+        "description": "Check that test evidence has been shown before completing"
+      }
+    ]
+  }
+}

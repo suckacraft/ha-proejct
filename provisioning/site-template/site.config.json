@@ -1,0 +1,71 @@
+{
+  "siteId": "SITE_ID_HERE",
+  "clientName": "CLIENT_NAME_HERE",
+  "installedDate": "YYYY-MM-DD",
+  "retainerTier": "standard",
+  "updateGroup": "main",
+  "hardware": {
+    "hubModel": "Beelink EQ12",
+    "piModel": null,
+    "cameraCount": 0,
+    "zigbeeDeviceCount": 0,
+    "shellyRelayCount": 0
+  },
+  "network": {
+    "tailscaleHostname": "TAILSCALE_HOSTNAME_HERE",
+    "cloudflareTunnel": "CLOUDFLARE_TUNNEL_NAME_HERE",
+    "clientAppUrl": "https://CLIENT_NAME.yourdomain.com.au",
+    "haLocalUrl": "http://192.168.1.X:8123"
+  },
+  "branding": {
+    "clientName": "CLIENT_NAME_HERE",
+    "logoUrl": "/assets/logo.png",
+    "primaryColour": "#YOUR_COLOUR_HERE"
+  },
+  "rooms": [
+    {
+      "id": "lounge",
+      "name": "Lounge",
+      "icon": "sofa",
+      "entityIds": []
+    },
+    {
+      "id": "kitchen",
+      "name": "Kitchen",
+      "icon": "chef-hat",
+      "entityIds": []
+    },
+    {
+      "id": "master-bedroom",
+      "name": "Master Bedroom",
+      "icon": "bed",
+      "entityIds": []
+    },
+    {
+      "id": "bedroom-2",
+      "name": "Bedroom 2",
+      "icon": "bed",
+      "entityIds": []
+    },
+    {
+      "id": "bedroom-3",
+      "name": "Bedroom 3",
+      "icon": "bed",
+      "entityIds": []
+    }
+  ],
+  "scenes": [
+    { "id": "morning", "name": "Morning", "icon": "sunrise", "sceneId": "scene.morning" },
+    { "id": "away", "name": "Away", "icon": "home-off", "sceneId": "scene.away" },
+    { "id": "evening", "name": "Evening", "icon": "sunset", "sceneId": "scene.evening" },
+    { "id": "movie", "name": "Movie", "icon": "film", "sceneId": "scene.movie" },
+    { "id": "sleep", "name": "Sleep", "icon": "moon", "sceneId": "scene.sleep" }
+  ],
+  "backup": {
+    "b2BucketConfig": "smarthome-SITE_ID_HERE-config",
+    "b2BucketClips": "smarthome-SITE_ID_HERE-clips",
+    "retentionDaysConfig": 90,
+    "retentionDaysClips": 90
+  },
+  "notes": ""
+}

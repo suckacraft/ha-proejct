@@ -1,0 +1,9 @@
+{
+  "clientName": "Demo Home",
+  "logoUrl": "/logo.png",
+  "colours": {
+    "primary": "#2563eb",
+    "secondary": "#64748b"
+  },
+  "rooms": []
+}
