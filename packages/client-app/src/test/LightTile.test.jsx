@@ -386,4 +386,76 @@ describe("LightTile", () => {
     expect(favIdx).toBeGreaterThanOrEqual(0);
     expect(favIdx).toBeLessThan(wwIdx);
   });
+
+  // ── Save / remove favourites ───────────────────────────────────────
+
+  it("Save to favourites button appears in custom picker when onAddFavourite is provided", () => {
+    render(<LightTile entity={HS_ON} onAddFavourite={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom colour" }));
+    expect(
+      screen.getByRole("button", { name: "Save colour to favourites" }),
+    ).toBeInTheDocument();
+  });
+
+  it("Save to favourites button is absent when onAddFavourite is not provided", () => {
+    render(<LightTile entity={HS_ON} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom colour" }));
+    expect(
+      screen.queryByRole("button", { name: "Save colour to favourites" }),
+    ).not.toBeInTheDocument();
+  });
+
+  it("clicking Save to favourites calls onAddFavourite with hs type and current draft values", () => {
+    const onAdd = vi.fn();
+    render(<LightTile entity={HS_ON} onAddFavourite={onAdd} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Custom colour" }));
+    fireEvent.click(
+      screen.getByRole("button", { name: "Save colour to favourites" }),
+    );
+    expect(onAdd).toHaveBeenCalledWith(
+      expect.objectContaining({ type: "hs", value: expect.any(Array) }),
+    );
+  });
+
+  it("favourite swatches show a remove button when onRemoveFavourite is provided", () => {
+    const fav = { name: "My Purple", type: "hs", value: [280, 90] };
+    render(
+      <LightTile
+        entity={HS_ON}
+        favourites={[fav]}
+        onRemoveFavourite={vi.fn()}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    expect(
+      screen.getByRole("button", { name: "Remove My Purple" }),
+    ).toBeInTheDocument();
+  });
+
+  it("remove button on a favourite swatch calls onRemoveFavourite with the swatch name", () => {
+    const fav = { name: "My Purple", type: "hs", value: [280, 90] };
+    const onRemove = vi.fn();
+    render(
+      <LightTile
+        entity={HS_ON}
+        favourites={[fav]}
+        onRemoveFavourite={onRemove}
+      />,
+    );
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    fireEvent.click(screen.getByRole("button", { name: "Remove My Purple" }));
+    expect(onRemove).toHaveBeenCalledWith("My Purple");
+  });
+
+  it("preset swatches have no remove button", () => {
+    render(<LightTile entity={HS_ON} onRemoveFavourite={vi.fn()} />);
+    fireEvent.click(screen.getByRole("button", { name: "Colour settings" }));
+    // Warm White is a preset, should never get a remove button
+    expect(
+      screen.queryByRole("button", { name: "Remove Warm White" }),
+    ).not.toBeInTheDocument();
+  });
 });

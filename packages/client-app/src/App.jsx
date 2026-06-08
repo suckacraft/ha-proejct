@@ -9,6 +9,7 @@ import {
 } from "react-router-dom";
 import { loadConfig } from "./config/index.js";
 import { useHA } from "./hooks/useHA.js";
+import { usePreferences } from "./hooks/usePreferences.js";
 import Header from "./components/shared/Header.jsx";
 import BottomNav from "./components/shared/BottomNav.jsx";
 import RoomList from "./components/rooms/RoomList.jsx";
@@ -29,6 +30,7 @@ function AppContent() {
   const location = useLocation();
   const navigate = useNavigate();
   useHA();
+  usePreferences();
 
   useEffect(() => {
     loadConfig().then(setConfig);

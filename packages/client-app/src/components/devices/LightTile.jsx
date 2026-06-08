@@ -90,7 +90,12 @@ const styledSlider =
   "[&::-moz-range-thumb]:rounded-full [&::-moz-range-thumb]:bg-white " +
   "[&::-moz-range-thumb]:border-0 [&::-moz-range-thumb]:shadow-md";
 
-export default function LightTile({ entity, favourites = [] }) {
+export default function LightTile({
+  entity,
+  favourites = [],
+  onAddFavourite = null,
+  onRemoveFavourite = null,
+}) {
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetReady, setSheetReady] = useState(false);
   const [customOpen, setCustomOpen] = useState(false);
@@ -458,23 +463,36 @@ export default function LightTile({ entity, favourites = [] }) {
                         mode,
                       );
                       return (
-                        <button
-                          key={swatch.label}
-                          onClick={() => tapSwatch(swatch)}
-                          aria-label={swatch.label}
-                          aria-pressed={active}
-                          className="shrink-0 min-h-[44px] min-w-[44px] flex items-center justify-center"
-                        >
-                          <span
-                            className={[
-                              "w-9 h-9 rounded-full block",
-                              active
-                                ? "ring-2 ring-white ring-offset-2 ring-offset-[#161920]"
-                                : "",
-                            ].join(" ")}
-                            style={{ background: swatch.bg }}
-                          />
-                        </button>
+                        <div key={swatch.label} className="relative shrink-0">
+                          <button
+                            onClick={() => tapSwatch(swatch)}
+                            aria-label={swatch.label}
+                            aria-pressed={active}
+                            className="min-h-[44px] min-w-[44px] flex items-center justify-center"
+                          >
+                            <span
+                              className={[
+                                "w-9 h-9 rounded-full block",
+                                active
+                                  ? "ring-2 ring-white ring-offset-2 ring-offset-[#161920]"
+                                  : "",
+                              ].join(" ")}
+                              style={{ background: swatch.bg }}
+                            />
+                          </button>
+                          {swatch.isFavourite && onRemoveFavourite && (
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                onRemoveFavourite(swatch.label);
+                              }}
+                              aria-label={`Remove ${swatch.label}`}
+                              className="absolute top-1 right-0 w-4 h-4 rounded-full bg-black/70 flex items-center justify-center text-white/50 text-[9px] leading-none active:text-white"
+                            >
+                              ×
+                            </button>
+                          )}
+                        </div>
                       );
                     })}
 
@@ -548,6 +566,22 @@ export default function LightTile({ entity, favourites = [] }) {
                         className={styledSlider}
                       />
                     </div>
+
+                    {onAddFavourite && (
+                      <button
+                        onClick={() =>
+                          onAddFavourite({
+                            name: `${Math.round(draftHue)}° ${Math.round(draftSat)}%`,
+                            type: "hs",
+                            value: [draftHue, draftSat],
+                          })
+                        }
+                        aria-label="Save colour to favourites"
+                        className="self-start font-display text-[9px] tracking-widest uppercase text-white/30 active:text-white/60"
+                      >
+                        ♥ Save to favourites
+                      </button>
+                    )}
                   </div>
                 )}
               </div>
