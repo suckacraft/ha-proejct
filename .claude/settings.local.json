@@ -6,7 +6,15 @@
       "Bash(git init:*)",
       "Bash(npm view:*)",
       "Bash(node:*)",
-      "Bash(cd:*)"
+      "Bash(cd:*)",
+      "Skill(update-config)",
+      "Bash(git -C C:\\\\Users\\\\Josh\\\\smarthome-platform log --oneline --all)",
+      "Bash(git -C C:\\\\Users\\\\Josh\\\\smarthome-platform ls-files)",
+      "Bash(claude config *)",
+      "Bash(claude mcp *)",
+      "Bash(Remove-Item -Force \"C:\\\\Users\\\\Josh\\\\smarthome-platform\\\\spike\\\\.ha-token\")",
+      "Bash(Remove-Item -Force \"C:\\\\Users\\\\Josh\\\\smarthome-platform\\\\ha-key.txt\")",
+      "Bash(Write-Output \"Deleted\")"
     ]
   }
 }

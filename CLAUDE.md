@@ -23,58 +23,57 @@
 13. Conventional commits: `feat:`, `fix:`, `chore:`, `docs:`, `refactor:`.
 14. Docker Compose for local dev orchestration. All services must start with `docker compose up`.
 15. Document decisions in PROGRESS.md with date and rationale.
-16. Model selection -- apply automatically at the start of each stage,
-    no prompting needed. Announce the switch with one line before proceeding.
+16. Model selection -- cannot be switched programmatically. Always tell the
+    user what to type and wait for confirmation before proceeding.
 
-    Use claude-opus-4-8 for:
-    - Section 1 kickoff (architecture and monorepo setup)
-    - Stage 2 entity normalisation (data shape decisions affect everything downstream)
-    - Stage 6.5 authentication (security architecture -- hard to fix later)
-    - Stage 11 provisioning (business-critical, real credentials involved)
-    - Any stage where a decision is hard to reverse
-    - Any bug unresolved after two attempts on Sonnet
-    - Any mid-build architecture tradeoff requiring deep reasoning
+    Default is claude-sonnet-4-6. At the start of every session, tell the user:
+    "Please type /model claude-sonnet-4-6 to set the session default,
+    then type go to begin."
 
-    Use claude-sonnet-4-6 for everything else:
-    - All component and UI stages (4, 5, 6, 7, 7.5, 8)
-    - REST endpoints, YAML, Docker config, documentation
-    - Whitelabel validation, mechanical stages with clear test gates
+    When Opus 4.8 is needed, tell the user:
+    "This stage needs the most capable model. Please type
+    /model claude-opus-4-8 then type go to continue."
+    Use Opus 4.8 for: Stage 2 entity normalisation, Stage 6.5 authentication,
+    Stage 11 provisioning, any decision hard to reverse, any unresolved bug
+    after two Sonnet attempts.
 
-    Switch with: claude config set model claude-opus-4-8
-              or: claude config set model claude-sonnet-4-6
+    When returning to Sonnet after Opus, tell the user:
+    "Opus stage complete. Please type /model claude-sonnet-4-6
+    then type go to continue."
 
-    Always start a session on Sonnet:
-    claude config set model claude-sonnet-4-6
+    When Haiku is needed, tell the user:
+    "Please type /model claude-haiku-4-5 then type go to continue."
+    Use Haiku only for: single-line config edits, file renames, and
+    purely mechanical tasks with zero reasoning required.
 
-    Announce every switch:
-    "Switching to Opus 4.8 -- [reason]"
-    "Staying on Sonnet 4.6 -- [reason]"
-17. Effort level -- set automatically per task type, no prompting needed.
-    Announce the change with one line before proceeding.
+    Never switch models silently.
+17. Effort level -- cannot be set programmatically. Always tell the user
+    what to type and wait for confirmation before proceeding.
 
-    Use xhigh effort for:
-    - Stage 2 entity normalisation
-    - Stage 6.5 authentication
-    - Any unresolved bug after two attempts at high effort
-    - Any architectural decision affecting multiple downstream stages
-    Command: /effort xhigh
+    Default is high, set permanently via .claude/settings.json. No command
+    needed for high -- it applies automatically every session.
 
-    Use high effort (default) for:
-    - All other build stages
-    - This is already the default -- no command needed at session start
+    When xhigh is needed, tell the user:
+    "This stage needs deeper reasoning. Please type /effort xhigh
+    then type go to continue."
+    Use xhigh for: Stage 2 entity normalisation, Stage 6.5 authentication,
+    any unresolved bug after two attempts at high.
 
-    Use medium effort for:
-    - Updating documentation files only
-    - Config file edits with no logic involved
-    - FUNCTIONALITY.md and PROGRESS.md updates
-    Command: /effort medium
+    When medium is needed, tell the user:
+    "Switching to lighter effort for this task. Please type /effort medium
+    then type go to continue."
+    Use medium for: updating FUNCTIONALITY.md, PROGRESS.md, SESSION_STATE.md,
+    CLAUDE.md, and any other documentation-only task with no logic involved.
 
-    Always restore high effort after medium tasks:
-    /effort high
+    When returning to high after medium, tell the user:
+    "Documentation done. Please type /effort high then type go to continue."
 
-    Announce every change:
-    "Setting effort to xhigh -- [reason]"
-    "Restoring effort to high"
+    When low is needed, tell the user:
+    "Please type /effort low then type go to continue."
+    Use low only for: simple config edits, renaming files, single-line
+    fixes where no reasoning is required.
+
+    Never change effort silently.
 18. Context discipline -- apply every session:
     Run /clear between unrelated tasks -- never carry stale context
     into a new stage. Run /rename before clearing to preserve the
