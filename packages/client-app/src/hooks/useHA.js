@@ -1,4 +1,4 @@
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import { useEntityStore } from "../store/entities.js";
 
 export function useHA() {
@@ -19,15 +19,4 @@ export function useHA() {
 
     return () => es.close();
   }, [setEntity, removeEntity]);
-
-  const callService = useCallback(async (domain, service, body = {}) => {
-    const res = await fetch(`/api/services/${domain}/${service}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(body),
-    });
-    return res.json();
-  }, []);
-
-  return { callService };
 }

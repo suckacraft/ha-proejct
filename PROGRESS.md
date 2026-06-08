@@ -2,6 +2,43 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-08 — Stage 5: room detail + entity tiles
+
+**Status:** Complete (branch: stage-5-room-detail)
+
+**Decisions:**
+- react-router-dom 7.17.0 (exact pin); BrowserRouter wraps App; AppContent is an inner
+  component so useLocation/useNavigate can be called inside the Router tree
+- Tab navigation: NavLink with isActive class function; Rooms tab active on both
+  /rooms and /rooms/:id (no `end` prop) — intentional, keeps the tab lit in context
+- callService extracted from useHA into src/lib/callService.js — it has no React
+  state dependency so a hook wrapper was unnecessary; tiles import it directly, no
+  prop drilling needed (satisfies Rule 5)
+- useHA simplified to SSE-only; hook no longer returns anything
+- Tile dispatch via TILE_MAP registry object — adding a new tile type is a one-line
+  change to devices/index.js, no switch/if-else to maintain
+- binary_sensor routed to SensorTile (read-only value display); no dedicated tile needed
+- SkeletonTile (animate-pulse) shown when entityId is in room config but entity not
+  yet in Zustand store — avoids blank tiles during initial SSE population
+- callService throws on non-ok HTTP responses — tiles fire-and-forget but errors
+  surface as unhandled rejections (observable in console) rather than silent failures
+- ClimateTile temperature unit uses ° without C/F — climate normalizer does not expose
+  unit_of_measurement; full unit support deferred to when ha-core adds it
+- ClimateTile uses Math.round((base + delta * step) * 10) / 10 to avoid float drift
+  on 0.5° steps
+- RoomList and RoomDetail default rooms prop to [] — guards against malformed config
+
+**Deferred:**
+- Site ID in API calls (Rule 4) — ha-core has no siteId middleware; Stage 6.5 (auth)
+- SSE error handler / reconnect — Stage 6 (needs disconnect UI state too)
+- LightTile/SwitchTile toggle DRY extraction — only 2 callers; CLAUDE.md Rule against
+  premature abstraction; revisit when a 3rd tile type needs the same pattern
+
+**Test evidence:**
+- 53/53 client-app unit tests pass (11 test files; 40 new tests across 7 new files)
+- 68/68 ha-core tests pass (unchanged)
+- 121 total tests across workspace
+
 ## 2026-06-08 — Stage 4: client-app foundation
 
 **Status:** Complete (branch: stage-4-client-app)

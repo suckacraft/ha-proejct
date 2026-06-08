@@ -15,7 +15,7 @@ vi.mock("../config/index.js", () => ({
 }));
 
 vi.mock("../hooks/useHA.js", () => ({
-  useHA: vi.fn().mockReturnValue({ connected: false, callService: vi.fn() }),
+  useHA: vi.fn(),
 }));
 
 describe("App shell", () => {

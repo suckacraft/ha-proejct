@@ -4,43 +4,46 @@ This file is updated automatically at every checkpoint and stage
 completion. If starting a new session, read this file first.
 
 ## Current stage
-Stage 4 (client-app foundation) -- COMPLETE, browser confirmed working
+Stage 5 (room detail + entity tiles) -- COMPLETE
 
 ## Last completed
-Stage 4 complete. Branch stage-4-client-app, HEAD 143a340:
-- loadConfig() + runtime CSS var white-label injection (--color-primary)
-- Zustand entity store (Map, setEntity, removeEntity)
-- useHA hook (EventSource /api/events, callService POST)
-- App shell: Header, BottomNav (tab state), RoomList (2-col dark grid)
-- PWA: vite-plugin-pwa manifest + @tailwindcss/vite v4 migration
-- Vite proxy /api → localhost:3001 (prefix stripped)
-- ha-core: wireEvents exported+injectable, normalises before SSE broadcast
-- PostCSS fix: postcss.config.js deleted -- conflicts with @tailwindcss/vite
-- 81 tests pass (68 ha-core + 13 client-app)
+Stage 5 complete. Branch stage-5-room-detail:
+- react-router-dom 7.17.0: URL-based navigation (/rooms, /rooms/:id, /scenes, /cameras, /settings)
+- BrowserRouter wraps App; AppContent inner component uses useLocation/useNavigate
+- BottomNav: NavLink-based (no props); Header: onBack prop → useNavigate(-1) on room detail
+- RoomList: Link-wrapped cards → /rooms/:id
+- RoomDetail: useParams + TILE_MAP registry dispatch + SkeletonTile for unloaded entities
+- LightTile (toggle + brightness slider), SwitchTile (toggle), SensorTile (value + unit),
+  ClimateTile (±1° buttons, HVAC badge), FallbackTile (read-only fallback)
+- callService: standalone function in src/lib/; throws on non-ok; no hook wrapper
+- useHA: simplified to SSE-only (callService extracted)
+- 53 client-app tests pass; 68 ha-core tests pass (121 total)
 
 ## In progress
 Nothing.
 
 ## Next action
-Stage 5: room detail view + entity tiles (lights, switches, sensors, climate).
-Files to build:
-- src/components/rooms/RoomDetail.jsx (room page, entity list)
-- src/components/devices/ (LightTile, SwitchTile, SensorTile, ClimateTile)
-- Add react-router-dom for navigation (tab → room detail)
+Stage 6: scenes tab + scene trigger UI.
+Files to build/modify:
+- src/components/scenes/SceneList.jsx (scene cards, trigger via callService scene.turn_on)
+- src/components/scenes/SceneTile.jsx (name, icon placeholder, tap-to-activate)
+- Route /scenes already exists as placeholder — replace with SceneList
+- Scenes data already in client.config.json (id, name, icon, sceneId)
 MCP: Filesystem only. Model: Sonnet 4.6. Effort: high.
 
 IMPORTANT for new session:
-- NO postcss.config.js -- deleted. @tailwindcss/vite handles everything.
-- NO tailwind.config.js -- deleted. Tailwind 4 uses CSS-first config.
+- NO postcss.config.js — deleted. @tailwindcss/vite handles everything.
+- NO tailwind.config.js — deleted. Tailwind 4 uses CSS-first config.
+- callService is src/lib/callService.js (standalone function, NOT in useHA)
+- useHA is SSE-only — no return value
+- TILE_MAP in src/components/devices/index.js — extend here to add new tile types
 - Vite proxy strips /api prefix before forwarding to ha-core port 3001
-- Tailwind 4: @theme defines --color-primary (compile fallback); loadConfig()
-  overrides it at runtime via style.setProperty
-- client.config.json write-protect hook active -- rooms must be added manually
-- ha-mcp removed from MCP config (not needed until Stage 7)
+- client.config.json write-protect hook active
 
 ## Branch state
 - main: 42fa2e7 (ha-core Stages 1-3.5)
-- stage-4-client-app: HEAD 143a340 (Stage 4 complete + PostCSS fix)
+- stage-4-client-app: 143a340 (Stage 4 complete)
+- stage-5-room-detail: HEAD (Stage 5 complete)
 - stage-1-ws-client: old feature branch, safe to delete
 - spike: throwaway, safe to delete
 

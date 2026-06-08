@@ -1,5 +1,25 @@
 # Functionality Tracker
 
+## Stage 5: room detail + entity tiles
+
+- [x] `react-router-dom` 7.17.0: URL-based navigation replacing useState tabs
+- [x] `BrowserRouter` + `AppContent` inner component — `useLocation`/`useNavigate` inside Router
+- [x] `BottomNav`: `NavLink`-based, active state via router; Rooms tab stays lit on sub-routes
+- [x] `RoomList`: room cards wrapped in `<Link to="/rooms/:id">`
+- [x] `Header`: optional `onBack` prop — back arrow appears on `/rooms/:id` routes
+- [x] `RoomDetail`: `useParams` for roomId, dispatches entities to tiles via `TILE_MAP` registry
+- [x] `TILE_MAP` registry: `{ light, switch, sensor, binary_sensor, climate }` — one-line extension point
+- [x] `SkeletonTile`: `animate-pulse` placeholder for entities not yet in store
+- [x] `FallbackTile`: read-only name + state for unrecognised domains (lock, media_player, etc.)
+- [x] `LightTile`: toggle on/off + brightness slider (when `brightnessPct !== null`)
+- [x] `SwitchTile`: toggle on/off
+- [x] `SensorTile`: name + value + unit (read-only); also handles `binary_sensor`
+- [x] `ClimateTile`: current temp, target temp, ±1° buttons → `climate.set_temperature`; HVAC mode badge; float-step safe
+- [x] `callService`: standalone async function in `src/lib/`; throws on non-ok responses
+- [x] `useHA`: simplified to SSE-only; `callService` extracted; URL contract pinned in tests
+- [x] 53 client-app unit tests pass; 68 ha-core tests pass (121 total)
+- Branch: `stage-5-room-detail`
+
 ## Stage 4: client-app foundation
 
 - [x] `client.config.json` reader: `loadConfig()` fetches config, sets `--color-primary` CSS var on `:root`

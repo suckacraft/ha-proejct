@@ -1,4 +1,5 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+// callService is now a standalone function in src/lib/callService.js — see callService.test.js
 import { renderHook, act } from "@testing-library/react";
 import { useHA } from "../hooks/useHA.js";
 import { useEntityStore } from "../store/entities.js";
@@ -32,7 +33,6 @@ MockEventSource.CLOSED = 2;
 
 beforeEach(() => {
   vi.stubGlobal("EventSource", MockEventSource);
-  vi.stubGlobal("fetch", vi.fn());
   useEntityStore.setState({ entities: new Map() });
 });
 
@@ -41,6 +41,11 @@ afterEach(() => {
 });
 
 describe("useHA", () => {
+  it("opens EventSource on /api/events", () => {
+    renderHook(() => useHA());
+    expect(MockEventSource.instance.url).toBe("/api/events");
+  });
+
   it("calls setEntity on state_changed SSE event with entity payload", () => {
     renderHook(() => useHA());
     const entity = {
@@ -82,26 +87,5 @@ describe("useHA", () => {
     });
 
     expect(useEntityStore.getState().entities.has("light.ceiling")).toBe(false);
-  });
-
-  it("callService POSTs to /api/services/:domain/:service with body", async () => {
-    global.fetch.mockResolvedValue({
-      ok: true,
-      json: () => Promise.resolve({ ok: true }),
-    });
-
-    const { result } = renderHook(() => useHA());
-
-    await act(async () => {
-      await result.current.callService("light", "turn_on", {
-        entity_id: "light.ceiling",
-      });
-    });
-
-    expect(fetch).toHaveBeenCalledWith("/api/services/light/turn_on", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ entity_id: "light.ceiling" }),
-    });
   });
 });
