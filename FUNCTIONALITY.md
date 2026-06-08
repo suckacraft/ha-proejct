@@ -9,6 +9,20 @@
 - [x] Docker Compose configuration
 - [x] Development tooling (Prettier, Vitest, Nodemon)
 
+## Stage 3.5: ha-core persistence and backup
+
+- [x] SQLite schema: `site_events` (connection, backup events) + `device_history` (sampled state)
+- [x] Availability transitions always recorded; other changes throttled to 5-min windows
+- [x] `ha_connected` / `ha_disconnected` events auto-recorded on WS events
+- [x] `device_history` populated from `state_changed` stream
+- [x] 90-day pruning on startup + nightly 03:00 cron
+- [x] `GET /history/events?since=`, `/history/uptime`, `/history/device/:id`, `/history/backups`
+- [x] `POST /backup/run`: triggers HA `backup.create`, uploads to Backblaze B2 (S3-compatible), records result
+- [x] B2 upload skips gracefully when credentials absent; SOPS injection point documented for Stage 11
+- [x] Nightly backup cron at 02:00
+- [x] 18 DB unit tests with in-memory SQLite (isolated per test via `setDb()`)
+- Branch: `stage-1-ws-client` (commit 276b91f)
+
 ## Stage 3: ha-core REST API and Express server
 
 - [x] Express server on port 3001 (`index.js`)

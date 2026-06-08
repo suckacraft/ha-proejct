@@ -2,6 +2,26 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-08 — Stage 3.5: ha-core persistence and backup
+
+**Status:** Complete (branch: stage-1-ws-client, commit 276b91f)
+
+**Decisions:**
+- device_history sampling: availability transitions always written (safety-relevant),
+  other changes throttled to 5-min windows to avoid DB bloat on chatty sensors
+- B2 upload uses @aws-sdk/client-s3 against B2's S3-compatible endpoint (not the
+  B2 native SDK) -- fewer moving parts, easier to swap storage providers later
+- SOPS encryption of backup files deferred to Stage 11 provisioning (age key
+  not available until a site is actually provisioned)
+- Camera clip sync deferred to after Stage 7 (Frigate integration not yet built)
+- setDb() injection pattern for tests -- no temp files, no filesystem I/O in tests
+- node-cron 4.2.1 (latest), @aws-sdk/client-s3 3.1063.0 (latest) -- exact pins
+
+**Test evidence:**
+- 65/65 unit tests pass (18 new DB tests)
+- Live: /backup/run -> haSnapshot:true (HA backup actually created),
+  b2Skipped:true (no creds), backup_completed event confirmed in site_events
+
 ## 2026-06-08 — Stage 3: ha-core REST API and Express server
 
 **Status:** Complete (branch: stage-1-ws-client, commit e0b4f98)
