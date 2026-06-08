@@ -61,7 +61,7 @@ $logDir = Join-Path $ProjectRoot 'logs'
 if (-not (Test-Path $logDir)) { New-Item -ItemType Directory $logDir | Out-Null }
 
 # ── Check operator-app ───────────────────────────────────────────────────────
-$operatorPkg   = Join-Path $ProjectRoot 'packages' 'operator-app' 'package.json'
+$operatorPkg   = "$ProjectRoot\packages\operator-app\package.json"
 $operatorReady = Test-Path $operatorPkg
 
 # ── Launch services ──────────────────────────────────────────────────────────
