@@ -56,7 +56,7 @@ function Start-Service([string]$title, [string]$workspace, [string]$logPath) {
 Set-Location "$ProjectRoot"
 `$env:HASS_URL   = "$HassUrl"
 `$env:HASS_TOKEN = "$HassToken"
-npm run dev -w $workspace 2>&1 | Tee-Object -FilePath "$logPath" -Append
+npm run dev -w $workspace *> "$logPath"
 "@
     $bytes   = [System.Text.Encoding]::Unicode.GetBytes($inner)
     $encoded = [Convert]::ToBase64String($bytes)

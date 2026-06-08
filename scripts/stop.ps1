@@ -30,6 +30,13 @@ Stop-Port 3001 'ha-core'
 Stop-Port 5173 'client-app'
 Stop-Port 3002 'operator-app'
 
+$orphans = Get-Process -Name 'node' -ErrorAction SilentlyContinue |
+    Where-Object { $_.MainWindowTitle -eq '' }
+if ($orphans) {
+    $orphans | Stop-Process -Force
+    Write-Host ("  killed {0} orphaned node process(es)" -f @($orphans).Count) -ForegroundColor DarkGray
+}
+
 if (Test-Path $logDir) {
     Get-ChildItem -Path $logDir -Filter '*.log' -ErrorAction SilentlyContinue |
         ForEach-Object { try { Remove-Item $_.FullName -Force } catch {} }
