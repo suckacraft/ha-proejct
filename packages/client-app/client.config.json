@@ -6,9 +6,11 @@
         "secondary": "#64748b"
     },
     "rooms": [
-        { "id": "living-room", "name": "Living Room", "entityIds": ["light.ceiling_lights"] },
+        { "id": "living-room", "name": "Living Room", "entityIds": ["light.living_room_rgbww_lights", "light.ceiling_lights"] },
         { "id": "bedroom", "name": "Bedroom", "entityIds": ["light.bed_light"] },
-        { "id": "kitchen", "name": "Kitchen", "entityIds": ["light.kitchen"] }
+        { "id": "kitchen", "name": "Kitchen", "entityIds": ["light.kitchen_lights"] },
+        { "id": "office", "name": "Office", "entityIds": ["light.office_rgbw_lights"] },
+        { "id": "entrance", "name": "Entrance", "entityIds": ["light.entrance_color_white_lights"] }
     ],
     "scenes": [
         { "id": "morning", "name": "Morning", "icon": "sunrise", "sceneId": "scene.morning" },
