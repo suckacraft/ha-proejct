@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Smarthome Platform — Dev</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;700&family=DM+Sans:wght@400;500&display=swap" rel="stylesheet">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    :root {
+      --bg:      #0c0e14;
+      --surface: #141720;
+      --border:  #1e2030;
+      --text:    #e2e8f0;
+      --muted:   #64748b;
+      --primary: #2563eb;
+      --green:   #22c55e;
+      --yellow:  #eab308;
+      --red:     #ef4444;
+      --grey:    #6b7280;
+      --font-h:  'Barlow Condensed', system-ui, sans-serif;
+      --font-b:  'DM Sans', system-ui, sans-serif;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: var(--font-b);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── Header ─────────────────────────────────────────────────────────────── */
+    header {
+      padding: 1.5rem 2rem;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+    }
+
+    .platform-name {
+      font-family: var(--font-h);
+      font-size: 1.375rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+    }
+
+    .platform-name em {
+      font-style: normal;
+      color: var(--primary);
+    }
+
+    .header-right { text-align: right; }
+
+    #clock {
+      font-family: var(--font-h);
+      font-size: 1.5rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--text);
+    }
+
+    #session-time {
+      font-size: 0.6875rem;
+      color: var(--muted);
+      margin-top: 0.2rem;
+      letter-spacing: 0.02em;
+    }
+
+    /* ── Main ───────────────────────────────────────────────────────────────── */
+    main {
+      padding: 2rem;
+      flex: 1;
+    }
+
+    .section-label {
+      font-family: var(--font-h);
+      font-size: 0.6875rem;
+      font-weight: 700;
+      letter-spacing: 0.14em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1rem;
+    }
+
+    /* ── Cards ──────────────────────────────────────────────────────────────── */
+    #cards {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 640px) {
+      #cards { grid-template-columns: 1fr; }
+      header { flex-direction: column; gap: 1rem; }
+      .header-right { text-align: left; }
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 1.25rem 1.5rem 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.35rem;
+    }
+
+    .card-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      margin-bottom: 0.2rem;
+    }
+
+    .svc-name {
+      font-family: var(--font-h);
+      font-size: 1.0625rem;
+      font-weight: 700;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+    }
+
+    .badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 0.2rem 0.65rem;
+      border-radius: 999px;
+      font-family: var(--font-h);
+      font-size: 0.625rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+    }
+
+    .badge-running   { background: rgba(34,197,94,.12);  color: var(--green); }
+    .badge-stopped   { background: rgba(239,68,68,.12);  color: var(--red); }
+    .badge-starting  { background: rgba(234,179,8,.12);  color: var(--yellow);
+                        animation: pulse 1.4s ease-in-out infinite; }
+    .badge-notbuilt  { background: rgba(107,114,128,.12); color: var(--grey); }
+
+    @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
+
+    .card-port   { font-size: 0.75rem; color: var(--muted); }
+    .card-uptime { font-size: 0.75rem; color: var(--muted); min-height: 1.1em; }
+
+    .card-actions {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      margin-top: 0.65rem;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.3rem;
+      padding: 0.35rem 0.85rem;
+      border-radius: 5px;
+      font-family: var(--font-b);
+      font-size: 0.8rem;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      border: 1px solid transparent;
+      transition: background 0.12s, opacity 0.12s;
+      line-height: 1;
+    }
+
+    .btn:disabled { opacity: 0.45; cursor: not-allowed; pointer-events: none; }
+
+    .btn-open {
+      background: rgba(37,99,235,.12);
+      color: #60a5fa;
+      border-color: rgba(37,99,235,.25);
+    }
+    .btn-open:hover { background: rgba(37,99,235,.22); }
+
+    .btn-restart {
+      background: rgba(239,68,68,.1);
+      color: #f87171;
+      border-color: rgba(239,68,68,.2);
+    }
+    .btn-restart:hover { background: rgba(239,68,68,.2); }
+
+    .terminal-hint { font-size: 0.7rem; color: var(--muted); }
+
+    .spinner {
+      display: inline-block;
+      width: 0.7rem; height: 0.7rem;
+      border: 2px solid transparent;
+      border-top-color: currentColor;
+      border-radius: 50%;
+      animation: spin 0.55s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* ── Footer ─────────────────────────────────────────────────────────────── */
+    footer {
+      padding: 1rem 2rem;
+      border-top: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    .footer-brand { font-size: 0.6875rem; color: var(--muted); }
+
+    .footer-links { display: flex; gap: 1.25rem; }
+    .footer-links a {
+      font-size: 0.6875rem;
+      color: var(--muted);
+      text-decoration: none;
+      transition: color 0.12s;
+    }
+    .footer-links a:hover { color: var(--text); }
+
+    #last-updated { font-size: 0.6875rem; color: var(--muted); }
+  </style>
+</head>
+<body>
+
+<header>
+  <div class="platform-name">Smarthome <em>Platform</em></div>
+  <div class="header-right">
+    <div id="clock">--:--:--</div>
+    <div id="session-time">Session running: —</div>
+  </div>
+</header>
+
+<main>
+  <div class="section-label">Services</div>
+  <div id="cards"></div>
+</main>
+
+<footer>
+  <span class="footer-brand">Smarthome Platform Dev Environment</span>
+  <div class="footer-links">
+    <a href="http://localhost:5173" target="_blank">Client App</a>
+    <a href="http://localhost:8123" target="_blank">Home Assistant</a>
+    <a href="http://localhost:3001/health" target="_blank">ha-core Health</a>
+  </div>
+  <span id="last-updated">Fetching…</span>
+</footer>
+
+<script>
+  var sessionStart = null;
+  var lastFetched  = null;
+
+  function pad(n) { return String(n).padStart(2, '0'); }
+
+  function fmtDuration(ms) {
+    var s = Math.floor(ms / 1000);
+    var m = Math.floor(s / 60);
+    var h = Math.floor(m / 60);
+    var d = Math.floor(h / 24);
+    if (d > 0) return d + 'd ' + (h % 24) + 'h ' + (m % 60) + 'm';
+    if (h > 0) return h + 'h ' + (m % 60) + 'm';
+    return m + 'm ' + (s % 60) + 's';
+  }
+
+  function updateTicker() {
+    var now = new Date();
+    document.getElementById('clock').textContent =
+      pad(now.getHours()) + ':' + pad(now.getMinutes()) + ':' + pad(now.getSeconds());
+
+    if (sessionStart) {
+      document.getElementById('session-time').textContent =
+        'Session running: ' + fmtDuration(Date.now() - sessionStart);
+    }
+
+    if (lastFetched) {
+      var s = Math.floor((Date.now() - lastFetched) / 1000);
+      document.getElementById('last-updated').textContent = 'Last updated: ' + s + 's ago';
+    }
+  }
+
+  function badgeClass(status) {
+    if (status === 'running')   return 'badge-running';
+    if (status === 'starting')  return 'badge-starting';
+    if (status === 'stopped')   return 'badge-stopped';
+    return 'badge-notbuilt';
+  }
+
+  function badgeLabel(status) {
+    return status === 'not built' ? 'NOT BUILT' : status.toUpperCase();
+  }
+
+  function renderCards(services) {
+    var html = services.map(function(svc) {
+      var isRunning = svc.status === 'running';
+      var bc  = badgeClass(svc.status);
+      var lbl = badgeLabel(svc.status);
+
+      var openBtn = (isRunning && svc.url)
+        ? '<a class="btn btn-open" href="' + svc.url + '" target="_blank">Open ↗</a>'
+        : '';
+
+      var actionHtml;
+      if (svc.canRestart) {
+        actionHtml = openBtn +
+          '<button class="btn btn-restart" id="restart-' + svc.name + '" ' +
+          'onclick="doRestart(\'' + svc.name + '\')">Restart</button>';
+      } else {
+        actionHtml = openBtn +
+          (isRunning ? '<span class="terminal-hint">Restart via terminal</span>' : '');
+      }
+
+      return '<div class="card">' +
+        '<div class="card-top">' +
+          '<div class="svc-name">' + svc.name + '</div>' +
+          '<span class="badge ' + bc + '">' + lbl + '</span>' +
+        '</div>' +
+        '<div class="card-port">Port ' + svc.port + '</div>' +
+        '<div class="card-uptime">' + (svc.uptime ? 'up ' + svc.uptime : '') + '</div>' +
+        '<div class="card-actions">' + actionHtml + '</div>' +
+      '</div>';
+    }).join('');
+
+    document.getElementById('cards').innerHTML = html;
+  }
+
+  function fetchStatus() {
+    fetch('/api/manage/status')
+      .then(function(r) { return r.json(); })
+      .then(function(data) {
+        sessionStart = new Date(data.sessionStart).getTime();
+        renderCards(data.services);
+        lastFetched = Date.now();
+      })
+      .catch(function() { /* silent — server may be mid-restart */ });
+  }
+
+  function doRestart(name) {
+    var btn = document.getElementById('restart-' + name);
+    if (!btn || btn.disabled) return;
+    btn.disabled = true;
+    btn.innerHTML = '<span class="spinner"></span> Restarting…';
+    fetch('/api/manage/restart/' + name, { method: 'POST' })
+      .catch(function() {})
+      .finally(function() {
+        // Nodemon takes ~2–3 s to restart; poll twice to catch it.
+        setTimeout(fetchStatus, 2500);
+        setTimeout(fetchStatus, 5000);
+        setTimeout(function() {
+          var b = document.getElementById('restart-' + name);
+          if (b) b.disabled = false;
+        }, 4000);
+      });
+  }
+
+  setInterval(updateTicker, 1000);
+  setInterval(fetchStatus, 5000);
+
+  updateTicker();
+  fetchStatus();
+</script>
+</body>
+</html>

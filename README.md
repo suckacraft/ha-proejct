@@ -96,12 +96,22 @@ smarthome-platform/
 
 ## Quick Start
 
-1. Copy `.env.local.example` to `.env.local` and add your HA token
-2. Run: `.\scripts\dev.ps1`
-3. Open: http://localhost:5173
+Double-click `start.bat` to start everything.
 
-To stop all services: `.\scripts\stop.ps1`  
-To check status: `.\scripts\status.ps1`
+| | |
+|---|---|
+| Management dashboard | http://localhost:3001/manage |
+| Client app | http://localhost:5173 |
+| Home Assistant | http://localhost:8123 |
+| ha-core API | http://localhost:3001 |
+
+To stop all services: double-click `stop.bat`  
+To check status: double-click `status.bat`
+
+**First time setup:**
+1. Copy `.env.local.example` to `.env.local`
+2. Add your HA token to `.env.local`
+3. Double-click `start.bat`
 
 ---
 

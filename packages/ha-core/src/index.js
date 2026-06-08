@@ -9,6 +9,7 @@ import { schedule } from "node-cron";
 import wsClient from "./ws-client.js";
 import sseManager from "./events.js";
 import { createRouter } from "./api.js";
+import { createManageRouter } from "./manage.js";
 import { recordSiteEvent, recordDeviceHistory, pruneOldRecords } from "./db.js";
 import { runBackup } from "./backup.js";
 import { normaliseEntity, isInternalEntity } from "./entities.js";
@@ -36,6 +37,8 @@ export function createApp() {
   app.use(helmet());
   app.use(morgan("dev"));
   app.use(express.json());
+
+  app.use(createManageRouter());
 
   app.use(
     createRouter({

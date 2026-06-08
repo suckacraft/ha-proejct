@@ -125,8 +125,12 @@ $opStatus = if ($operatorReady) { if (Test-Port 3002) { 'RUNNING' } else { 'FAIL
 Clear-Host
 Write-StatusPanel $haStatus $clStatus $opStatus
 
-# ── Open browser when client-app confirmed running ────────────────────────────
-if ($clStatus -eq 'RUNNING') { Start-Process 'http://localhost:5173' }
+# ── Open browser: manage dashboard first, then client-app after 2s ───────────
+if ($haStatus -eq 'RUNNING') { Start-Process 'http://localhost:3001/manage' }
+if ($clStatus -eq 'RUNNING') {
+    Start-Sleep -Seconds 2
+    Start-Process 'http://localhost:5173'
+}
 
 # ── Hold until Ctrl+C, then stop all spawned processes ───────────────────────
 try {
