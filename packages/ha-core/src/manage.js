@@ -1,7 +1,6 @@
 import { readFileSync, existsSync } from "node:fs";
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "node:url";
-import net from "node:net";
 import { Router } from "express";
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -10,20 +9,22 @@ const SERVER_START_TIME = Date.now();
 // Resolve to the monorepo root (src → ha-core → packages → root).
 const PROJECT_ROOT = join(__dirname, "..", "..", "..");
 
-function checkPort(port) {
+function checkHttp(url) {
   return new Promise((resolve) => {
-    const socket = new net.Socket();
-    socket.setTimeout(200);
-    socket.on("connect", () => {
-      socket.destroy();
-      resolve(true);
-    });
-    socket.on("timeout", () => {
-      socket.destroy();
+    const controller = new AbortController();
+    const timer = setTimeout(() => {
+      controller.abort();
       resolve(false);
-    });
-    socket.on("error", () => resolve(false));
-    socket.connect(port, "127.0.0.1");
+    }, 1000);
+    fetch(url, { signal: controller.signal })
+      .then(() => {
+        clearTimeout(timer);
+        resolve(true);
+      })
+      .catch(() => {
+        clearTimeout(timer);
+        resolve(false);
+      });
   });
 }
 
@@ -63,10 +64,12 @@ export function createManageRouter({
     const operatorBuilt = existsSync(operatorPkgPath);
 
     const [haUp, clientUp, operatorUp, hassUp] = await Promise.all([
-      checkPort(3001),
-      checkPort(5173),
-      operatorBuilt ? checkPort(3002) : Promise.resolve(false),
-      checkPort(8123),
+      checkHttp("http://localhost:3001/health"),
+      checkHttp("http://localhost:5173"),
+      operatorBuilt
+        ? checkHttp("http://localhost:3002")
+        : Promise.resolve(false),
+      checkHttp("http://localhost:8123"),
     ]);
 
     const services = [
