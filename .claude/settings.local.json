@@ -14,7 +14,12 @@
       "Bash(claude mcp *)",
       "Bash(Remove-Item -Force \"C:\\\\Users\\\\Josh\\\\smarthome-platform\\\\spike\\\\.ha-token\")",
       "Bash(Remove-Item -Force \"C:\\\\Users\\\\Josh\\\\smarthome-platform\\\\ha-key.txt\")",
-      "Bash(Write-Output \"Deleted\")"
+      "Bash(Write-Output \"Deleted\")",
+      "Bash(npm show *)",
+      "Bash(npm test *)",
+      "Bash(npm install *)",
+      "mcp__plugin_context7_context7__resolve-library-id",
+      "mcp__plugin_context7_context7__query-docs"
     ]
   }
 }

@@ -1,9 +1,20 @@
 {
-  "clientName": "Demo Home",
-  "logoUrl": "/logo.png",
-  "colours": {
-    "primary": "#2563eb",
-    "secondary": "#64748b"
-  },
-  "rooms": []
+    "clientName": "Demo Home",
+    "logoUrl": "/logo.png",
+    "colours": {
+        "primary": "#2563eb",
+        "secondary": "#64748b"
+    },
+    "rooms": [
+        { "id": "living-room", "name": "Living Room", "entityIds": ["light.ceiling_lights"] },
+        { "id": "bedroom", "name": "Bedroom", "entityIds": ["light.bed_light"] },
+        { "id": "kitchen", "name": "Kitchen", "entityIds": ["light.kitchen"] }
+    ],
+    "scenes": [
+        { "id": "morning", "name": "Morning", "icon": "sunrise", "sceneId": "scene.morning" },
+        { "id": "away", "name": "Away", "icon": "home-off", "sceneId": "scene.away" },
+        { "id": "evening", "name": "Evening", "icon": "sunset", "sceneId": "scene.evening" },
+        { "id": "movie", "name": "Movie", "icon": "film", "sceneId": "scene.movie" },
+        { "id": "sleep", "name": "Sleep", "icon": "moon", "sceneId": "scene.sleep" }
+    ]
 }
