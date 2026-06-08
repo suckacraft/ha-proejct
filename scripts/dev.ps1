@@ -66,6 +66,8 @@ npm run dev -w $workspace 2>&1 | Tee-Object -FilePath "$logPath" -Append
 # ── Set up logs directory ────────────────────────────────────────────────────
 $logDir = Join-Path $ProjectRoot 'logs'
 if (-not (Test-Path $logDir)) { New-Item -ItemType Directory $logDir | Out-Null }
+Get-ChildItem -Path $logDir -Filter '*.log' -ErrorAction SilentlyContinue |
+    ForEach-Object { try { Remove-Item $_.FullName -Force } catch {} }
 
 # ── Check operator-app ───────────────────────────────────────────────────────
 $operatorPkg   = "$ProjectRoot\packages\operator-app\package.json"

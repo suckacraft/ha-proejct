@@ -20,9 +20,19 @@ function Stop-Port([int]$port, [string]$label) {
     }
 }
 
+$ScriptDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectRoot = Split-Path -Parent $ScriptDir
+$logDir      = Join-Path $ProjectRoot 'logs'
+
 Write-Host ''
 Write-Host 'Stopping Smarthome Platform dev services...' -ForegroundColor Cyan
 Stop-Port 3001 'ha-core'
 Stop-Port 5173 'client-app'
 Stop-Port 3002 'operator-app'
+
+if (Test-Path $logDir) {
+    Get-ChildItem -Path $logDir -Filter '*.log' -ErrorAction SilentlyContinue |
+        ForEach-Object { try { Remove-Item $_.FullName -Force } catch {} }
+    Write-Host '  log files cleared' -ForegroundColor DarkGray
+}
 Write-Host ''
