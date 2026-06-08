@@ -7,3 +7,4 @@ dist/
 coverage/
 .vite/
 ha-key.txt
+spike/.ha-token
