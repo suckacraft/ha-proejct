@@ -84,58 +84,68 @@ describe("LightTile", () => {
     expect(screen.getByText("ON")).toBeInTheDocument();
   });
 
-  // ── Card variant ───────────────────────────────────────────────────
+  // ── Card variant (unified: every card is a div) ────────────────────
 
-  it("onoff mode renders card as <button>", () => {
+  it("renders card as a <div> in onoff mode", () => {
     const { container } = render(<LightTile entity={ONOFF_ON} />);
-    expect(container.querySelector("button.rounded-2xl")).toBeInTheDocument();
+    expect(container.querySelector("div.rounded-2xl")).toBeInTheDocument();
+    expect(
+      container.querySelector("button.rounded-2xl"),
+    ).not.toBeInTheDocument();
   });
 
-  it("non-onoff mode renders card as <div>", () => {
+  it("renders card as a <div> in dimmable mode", () => {
     const { container } = render(<LightTile entity={DIM_ON} />);
     expect(container.querySelector("div.rounded-2xl")).toBeInTheDocument();
   });
 
-  it("non-onoff shows power icon toggle button when on", () => {
+  it("rgbww light is colour-capable, not onoff (resolveMode regression)", () => {
+    const rgbww = base({
+      brightnessPct: 71,
+      hsColor: [277, 41],
+      supportedColorModes: ["rgbww"],
+    });
+    render(<LightTile entity={rgbww} />);
+    // Colour-capable cards expose the colour circle when on
+    expect(
+      screen.getByRole("button", { name: "Colour settings" }),
+    ).toBeInTheDocument();
+  });
+
+  // ── Power icon: present on EVERY card ──────────────────────────────
+
+  it("shows power icon on onoff card when on", () => {
+    render(<LightTile entity={ONOFF_ON} />);
+    expect(
+      screen.getByRole("button", { name: "Turn off" }),
+    ).toBeInTheDocument();
+  });
+
+  it("shows power icon on onoff card when off", () => {
+    render(<LightTile entity={ONOFF_OFF} />);
+    expect(screen.getByRole("button", { name: "Turn on" })).toBeInTheDocument();
+  });
+
+  it("shows power icon on dimmable card when on", () => {
     render(<LightTile entity={DIM_ON} />);
     expect(
       screen.getByRole("button", { name: "Turn off" }),
     ).toBeInTheDocument();
   });
 
-  it("non-onoff shows power icon toggle button when off", () => {
+  it("shows power icon on dimmable card when off", () => {
     render(<LightTile entity={DIM_OFF} />);
     expect(screen.getByRole("button", { name: "Turn on" })).toBeInTheDocument();
   });
 
-  it("onoff card has no separate power icon button", () => {
-    render(<LightTile entity={ONOFF_ON} />);
-    // Power icon labels are exactly "Turn off"/"Turn on"; onoff card label is longer
+  it("shows power icon on colour card", () => {
+    render(<LightTile entity={HS_ON} />);
     expect(
-      screen.queryByRole("button", { name: "Turn off" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Turn on" }),
-    ).not.toBeInTheDocument();
+      screen.getByRole("button", { name: "Turn off" }),
+    ).toBeInTheDocument();
   });
 
   // ── Toggle ─────────────────────────────────────────────────────────
-
-  it("tapping onoff card when on calls turn_off", () => {
-    render(<LightTile entity={ONOFF_ON} />);
-    fireEvent.click(screen.getByRole("button", { name: /tap to turn off/i }));
-    expect(callService).toHaveBeenCalledWith("light", "turn_off", {
-      entity_id: "light.test",
-    });
-  });
-
-  it("tapping onoff card when off calls turn_on", () => {
-    render(<LightTile entity={ONOFF_OFF} />);
-    fireEvent.click(screen.getByRole("button", { name: /tap to turn on/i }));
-    expect(callService).toHaveBeenCalledWith("light", "turn_on", {
-      entity_id: "light.test",
-    });
-  });
 
   it("power icon (on) calls turn_off", () => {
     render(<LightTile entity={DIM_ON} />);
@@ -151,6 +161,25 @@ describe("LightTile", () => {
     expect(callService).toHaveBeenCalledWith("light", "turn_on", {
       entity_id: "light.test",
     });
+  });
+
+  it("tapping an onoff card body (no drag) toggles it", () => {
+    const { container } = render(<LightTile entity={ONOFF_OFF} />);
+    const card = container.querySelector("div.rounded-2xl");
+    // A tap = pointerdown + pointerup at the same position (no movement)
+    fireEvent.pointerDown(card, { clientY: 100, pointerId: 1 });
+    fireEvent.pointerUp(card, { clientY: 100, pointerId: 1 });
+    expect(callService).toHaveBeenCalledWith("light", "turn_on", {
+      entity_id: "light.test",
+    });
+  });
+
+  it("tapping a dimmable card body is a no-op (power icon toggles instead)", () => {
+    const { container } = render(<LightTile entity={DIM_ON} />);
+    const card = container.querySelector("div.rounded-2xl");
+    fireEvent.pointerDown(card, { clientY: 100, pointerId: 1 });
+    fireEvent.pointerUp(card, { clientY: 100, pointerId: 1 });
+    expect(callService).not.toHaveBeenCalled();
   });
 
   // ── Colour circle visibility ───────────────────────────────────────

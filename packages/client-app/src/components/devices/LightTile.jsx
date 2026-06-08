@@ -26,7 +26,14 @@ const PRESETS = [
 // device under-reports its capabilities — treat as brightness-capable.
 function resolveMode(modes, brightnessPct) {
   const m = modes ?? [];
-  const hasHs = m.includes("hs") || m.includes("rgb");
+  // Any of these report a controllable colour. rgbw/rgbww/xy are full-colour
+  // modes that accept hs_color; treat them as colour-capable like hs/rgb.
+  const hasHs =
+    m.includes("hs") ||
+    m.includes("rgb") ||
+    m.includes("rgbw") ||
+    m.includes("rgbww") ||
+    m.includes("xy");
   const hasTemp = m.includes("color_temp");
   if (hasHs && hasTemp) return "combo";
   if (hasHs) return "hs";
@@ -115,6 +122,7 @@ export default function LightTile({ entity, favourites = [] }) {
   const minTemp = minColorTempKelvin ?? 2000;
   const maxTemp = maxColorTempKelvin ?? 6500;
   const hasColour = mode === "hs" || mode === "color_temp" || mode === "combo";
+  const dimmable = mode !== "onoff";
   const displayBrightness = draftBrightness ?? brightnessPct;
 
   // All swatches: favourites first, then presets.
@@ -199,20 +207,22 @@ export default function LightTile({ entity, favourites = [] }) {
     }, 300);
   }
 
-  // ── Card vertical drag (brightness) ───────────────────
+  // ── Card vertical drag (brightness) / tap (toggle) ─────
   function handleCardPointerDown(e) {
+    // Let nested controls (power icon, colour circle) handle their own taps.
     if (e.target.closest("button, input")) return;
     dragRef.current = {
       y: e.clientY,
       pct: brightnessPct ?? 50,
-      height: e.currentTarget.getBoundingClientRect().height,
+      height: e.currentTarget.getBoundingClientRect().height || 1,
       moved: false,
     };
-    e.currentTarget.setPointerCapture(e.pointerId);
+    // Optional chaining: jsdom (tests) lacks setPointerCapture.
+    e.currentTarget.setPointerCapture?.(e.pointerId);
   }
 
   function handleCardPointerMove(e) {
-    if (!dragRef.current) return;
+    if (!dragRef.current || !dimmable) return; // onoff lights don't dim
     const deltaY = dragRef.current.y - e.clientY; // up = positive = brighter
     if (Math.abs(deltaY) > 6) {
       if (!dragRef.current.moved) {
@@ -234,7 +244,13 @@ export default function LightTile({ entity, favourites = [] }) {
     dragRef.current = null;
     setIsDragging(false);
     setDraftBrightness(null);
-    if (moved && draft !== null && isOn) setBrightness(draft);
+    if (!moved) {
+      // A tap (no drag) on a non-dimmable card toggles it. Dimmable cards
+      // toggle via the always-present power icon, so a stray tap is a no-op.
+      if (!dimmable) toggle();
+      return;
+    }
+    if (draft !== null && isOn) setBrightness(draft);
   }
 
   // ── Sheet handle drag (drag-down to dismiss) ───────────
@@ -277,34 +293,32 @@ export default function LightTile({ entity, favourites = [] }) {
   // ── Shared card body ──────────────────────────────────
   const cardBody = (
     <>
-      {/* Top row: name + power icon */}
+      {/* Top row: name + power icon (always present on every card) */}
       <div className="flex items-start justify-between gap-1">
         <span className="font-display text-sm font-semibold uppercase tracking-wider text-white leading-tight">
           {entity.name}
         </span>
-        {mode !== "onoff" && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              toggle();
-            }}
-            aria-label={isOn ? "Turn off" : "Turn on"}
-            className="shrink-0 min-h-[44px] min-w-[44px] flex items-start justify-end pt-0.5"
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            toggle();
+          }}
+          aria-label={isOn ? "Turn off" : "Turn on"}
+          className="shrink-0 min-h-[44px] min-w-[44px] flex items-start justify-end pt-0.5"
+        >
+          <svg
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="currentColor"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            className={`w-5 h-5 transition-colors ${isOn ? "text-white" : "text-white/25"}`}
           >
-            <svg
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className={`w-5 h-5 transition-colors ${isOn ? "text-white" : "text-white/25"}`}
-            >
-              <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
-              <line x1="12" y1="2" x2="12" y2="12" />
-            </svg>
-          </button>
-        )}
+            <path d="M18.36 6.64a9 9 0 1 1-12.73 0" />
+            <line x1="12" y1="2" x2="12" y2="12" />
+          </svg>
+        </button>
       </div>
 
       {/* Spacer */}
@@ -342,32 +356,19 @@ export default function LightTile({ entity, favourites = [] }) {
 
   return (
     <>
-      {/* ── Tile card ─────────────────────────────────────── */}
-      {mode === "onoff" ? (
-        <button
-          onClick={toggle}
-          aria-label={
-            isOn
-              ? `${entity.name}, on — tap to turn off`
-              : `${entity.name}, off — tap to turn on`
-          }
-          className="rounded-2xl border border-[--color-border] min-h-[120px] flex flex-col p-3 text-left w-full"
-          style={cardStyle}
-        >
-          {cardBody}
-        </button>
-      ) : (
-        <div
-          className="rounded-2xl border border-[--color-border] min-h-[120px] flex flex-col p-3 touch-none select-none cursor-ns-resize"
-          style={cardStyle}
-          onPointerDown={handleCardPointerDown}
-          onPointerMove={handleCardPointerMove}
-          onPointerUp={handleCardPointerUp}
-          onPointerCancel={handleCardPointerUp}
-        >
-          {cardBody}
-        </div>
-      )}
+      {/* ── Tile card (one variant; power icon always toggles) ── */}
+      <div
+        className={`rounded-2xl border border-[--color-border] min-h-[120px] flex flex-col p-3 touch-none select-none ${
+          dimmable ? "cursor-ns-resize" : "cursor-pointer"
+        }`}
+        style={cardStyle}
+        onPointerDown={handleCardPointerDown}
+        onPointerMove={handleCardPointerMove}
+        onPointerUp={handleCardPointerUp}
+        onPointerCancel={handleCardPointerUp}
+      >
+        {cardBody}
+      </div>
 
       {/* ── Colour bottom sheet ───────────────────────────── */}
       {sheetOpen && (
