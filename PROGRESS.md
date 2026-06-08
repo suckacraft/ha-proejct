@@ -2,6 +2,51 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-08 — LightTile redesign + ha-core preferences API
+
+**Status:** In progress (branch: stage-5-room-detail). Parts 1–2 complete.
+
+**LightTile redesign (commit `582faab`):**
+- Card-as-brightness-drag with Hue/iOS-style warm radial glow that scales with
+  brightness; colour controls moved into a bottom sheet (temperature strip, swatch
+  presets, custom hue+sat picker). Verified in browser at 375px via Playwright.
+- 34-test suite covers all five modes, sheet contents, and service dispatch.
+
+**LightTile control fixes (commit `7f8c11c`):**
+- `resolveMode` treated `rgbw`/`rgbww`/`xy` lights as `onoff` (exact-match gap), so
+  the Living Room RGBWW card rendered as a dead toggle — no power icon, no drag, no
+  colour circle. Now recognised as colour-capable.
+- Unified the two card variants (`<button>` for onoff, `<div>` for the rest) into a
+  single draggable `<div>`; the power icon is now rendered on EVERY card, so toggle
+  is never gated behind colour-mode detection. Non-dimmable cards toggle on body tap;
+  dimmable cards drag for brightness and toggle via the icon. `setPointerCapture`
+  guarded for jsdom.
+- Verified live at 375px: power icon + colour circle on both RGBWW and Ceiling cards,
+  drag raised Ceiling 40%→100% (confirmed in ha-core), colour-circle tap opened sheet.
+
+**ha-core preferences API (Part 2):**
+- New `preferences(site_id, key, value, updated_at)` table, composite PK `(site_id,
+  key)` — gives both tenant isolation (Rule 4) and the lookup index. `value` is
+  JSON text, so any payload shape round-trips (objects, arrays, primitives, null).
+- `db.js`: `getPreference`, `getAllPreferences`, `setPreference` (UPSERT via
+  `ON CONFLICT`). All siteId-scoped. Returns parsed values; absent key → null.
+- Routes: `GET /preferences` (site map for hydration), `GET /preferences/:key`
+  (`{key, value}`, value null when unset — absence is normal, not a 404),
+  `POST /preferences/:key` with `{ value }` envelope (handles primitives despite
+  Express strict JSON; 400 if value missing or key > 128 chars).
+- All state lives in ha-core, never the browser — keeps the PWA and future
+  native/kiosk surfaces in sync (Future Architecture rule).
+- Verified live against :3001 — POST/GET round-trip of an object, primitive string
+  (room default), list endpoint, and all 400 paths. db file is gitignored; schema
+  migrates at runtime via `CREATE TABLE IF NOT EXISTS`.
+
+**Test evidence:**
+- 84/84 client-app unit tests pass.
+- 84/84 ha-core tests pass (6 live-HA integration tests skipped), incl. 9 new db
+  preference tests + 8 new API route tests.
+
+**Next:** Part 3 — client-side favourites + room defaults consuming this API (Sonnet).
+
 ## 2026-06-08 — Stage 5: room detail + entity tiles
 
 **Status:** Complete (branch: stage-5-room-detail)

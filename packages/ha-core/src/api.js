@@ -10,6 +10,9 @@ import {
   getUptimeSummary,
   getDeviceHistory,
   getBackupHistory,
+  getPreference,
+  getAllPreferences,
+  setPreference,
 } from "./db.js";
 import { runBackup } from "./backup.js";
 
@@ -122,6 +125,34 @@ export function createRouter({ wsClient, clientConfig, siteId }) {
 
   router.get("/history/backups", (_req, res) => {
     res.json(getBackupHistory());
+  });
+
+  // -- Preferences ------------------------------------------------------------
+  // Per-site key/value store. Scoped to the injected siteId so a deployment
+  // never reads another tenant's settings. All state lives here, never in the
+  // browser, so the PWA and future native/kiosk surfaces stay in sync.
+
+  router.get("/preferences", (_req, res) => {
+    res.json(getAllPreferences(siteId));
+  });
+
+  router.get("/preferences/:key", (req, res) => {
+    const value = getPreference(siteId, req.params.key);
+    res.json({ key: req.params.key, value });
+  });
+
+  router.post("/preferences/:key", (req, res) => {
+    if (!req.body || !("value" in req.body)) {
+      return res
+        .status(400)
+        .json({ error: "Request body must include a 'value' field" });
+    }
+    if (req.params.key.length > 128) {
+      return res
+        .status(400)
+        .json({ error: "Preference key must be 128 characters or fewer" });
+    }
+    res.json(setPreference(siteId, req.params.key, req.body.value));
   });
 
   // -- Backup -----------------------------------------------------------------

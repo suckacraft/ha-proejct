@@ -9,6 +9,9 @@ import {
   recordDeviceHistory,
   getDeviceHistory,
   pruneOldRecords,
+  getPreference,
+  getAllPreferences,
+  setPreference,
 } from "../src/db.js";
 
 // Each test gets a fresh in-memory DB so tests are fully isolated.
@@ -28,6 +31,13 @@ function makeTestDb() {
       state TEXT NOT NULL,
       timestamp TEXT NOT NULL,
       is_availability_change INTEGER NOT NULL DEFAULT 0
+    );
+    CREATE TABLE preferences (
+      site_id TEXT NOT NULL,
+      key TEXT NOT NULL,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (site_id, key)
     );
     CREATE INDEX idx_site_events_ts ON site_events(timestamp);
     CREATE INDEX idx_device_history_entity ON device_history(entity_id, timestamp);
@@ -185,6 +195,73 @@ describe("recordDeviceHistory / getDeviceHistory", () => {
     expect(rows).toHaveLength(0);
     const all = getDeviceHistory("sensor.x", { since: past });
     expect(all).toHaveLength(1);
+  });
+});
+
+// -- preferences --------------------------------------------------------------
+
+describe("setPreference / getPreference", () => {
+  it("stores a value and reads it back", () => {
+    setPreference("site-a", "theme", "dark");
+    expect(getPreference("site-a", "theme")).toBe("dark");
+  });
+
+  it("returns null for a key that was never set", () => {
+    expect(getPreference("site-a", "missing")).toBeNull();
+  });
+
+  it("round-trips objects and arrays without loss", () => {
+    const favourites = [
+      { name: "Sunset", type: "hs", value: [24, 90] },
+      { name: "Reading", type: "color_temp", value: 3000 },
+    ];
+    setPreference("site-a", "favourites", favourites);
+    expect(getPreference("site-a", "favourites")).toEqual(favourites);
+  });
+
+  it("round-trips primitive value types", () => {
+    setPreference("site-a", "count", 42);
+    setPreference("site-a", "enabled", true);
+    setPreference("site-a", "nothing", null);
+    expect(getPreference("site-a", "count")).toBe(42);
+    expect(getPreference("site-a", "enabled")).toBe(true);
+    expect(getPreference("site-a", "nothing")).toBeNull();
+  });
+
+  it("upserts: a second set overwrites the first", () => {
+    setPreference("site-a", "theme", "dark");
+    setPreference("site-a", "theme", "light");
+    expect(getPreference("site-a", "theme")).toBe("light");
+  });
+
+  it("returns the saved record with an ISO updatedAt", () => {
+    const saved = setPreference("site-a", "theme", "dark");
+    expect(saved.key).toBe("theme");
+    expect(saved.value).toBe("dark");
+    expect(new Date(saved.updatedAt).toISOString()).toBe(saved.updatedAt);
+  });
+
+  it("isolates preferences by site -- same key, different sites", () => {
+    setPreference("site-a", "theme", "dark");
+    setPreference("site-b", "theme", "light");
+    expect(getPreference("site-a", "theme")).toBe("dark");
+    expect(getPreference("site-b", "theme")).toBe("light");
+  });
+});
+
+describe("getAllPreferences", () => {
+  it("returns an empty object when a site has no preferences", () => {
+    expect(getAllPreferences("site-a")).toEqual({});
+  });
+
+  it("returns a key/value map scoped to one site", () => {
+    setPreference("site-a", "theme", "dark");
+    setPreference("site-a", "favourites", [1, 2]);
+    setPreference("site-b", "theme", "light");
+    expect(getAllPreferences("site-a")).toEqual({
+      theme: "dark",
+      favourites: [1, 2],
+    });
   });
 });
 

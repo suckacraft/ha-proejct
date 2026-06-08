@@ -1,7 +1,25 @@
 import { describe, it, expect, beforeAll, afterAll, vi } from "vitest";
 import { createServer } from "node:http";
 import express from "express";
+import Database from "better-sqlite3";
 import { createRouter } from "../src/api.js";
+import { setDb } from "../src/db.js";
+
+// Preference routes hit the DB singleton. Inject an in-memory DB so these
+// tests stay isolated and never write to the real data/ha-core.db file.
+beforeAll(() => {
+  const db = new Database(":memory:");
+  db.exec(`
+    CREATE TABLE preferences (
+      site_id TEXT NOT NULL,
+      key TEXT NOT NULL,
+      value TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (site_id, key)
+    );
+  `);
+  setDb(db);
+});
 
 // Stub ws-client: no HA connection required. Pre-loaded with a couple of
 // real-shaped entities from the fixtures so route logic has data to work with.
@@ -230,5 +248,63 @@ describe("POST /scenes/:sceneId", () => {
       "turn_on",
       expect.objectContaining({ entity_id: "scene.movie_night" }),
     );
+  });
+});
+
+// -- /preferences -------------------------------------------------------------
+
+describe("GET /preferences/:key", () => {
+  it("returns { key, value: null } for a key that was never set", async () => {
+    const res = await get("/preferences/never_set");
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body).toEqual({ key: "never_set", value: null });
+  });
+});
+
+describe("POST /preferences/:key", () => {
+  it("stores a value and returns the saved record", async () => {
+    const res = await post("/preferences/theme", { value: "dark" });
+    expect(res.status).toBe(200);
+    const body = await res.json();
+    expect(body.key).toBe("theme");
+    expect(body.value).toBe("dark");
+    expect(body.updatedAt).toBeTruthy();
+  });
+
+  it("round-trips an object payload through GET", async () => {
+    const favourites = [{ name: "Sunset", type: "hs", value: [24, 90] }];
+    await post("/preferences/favourites", { value: favourites });
+    const body = await (await get("/preferences/favourites")).json();
+    expect(body).toEqual({ key: "favourites", value: favourites });
+  });
+
+  it("overwrites an existing value", async () => {
+    await post("/preferences/lang", { value: "en" });
+    await post("/preferences/lang", { value: "fr" });
+    const body = await (await get("/preferences/lang")).json();
+    expect(body.value).toBe("fr");
+  });
+
+  it("returns 400 when the body has no 'value' field", async () => {
+    const res = await post("/preferences/oops", { notValue: 1 });
+    expect(res.status).toBe(400);
+    const body = await res.json();
+    expect(body.error).toMatch(/value/i);
+  });
+
+  it("returns 400 for an over-long key", async () => {
+    const res = await post(`/preferences/${"x".repeat(129)}`, { value: 1 });
+    expect(res.status).toBe(400);
+  });
+});
+
+describe("GET /preferences", () => {
+  it("returns a key/value map of all preferences for the site", async () => {
+    await post("/preferences/alpha", { value: 1 });
+    await post("/preferences/beta", { value: { nested: true } });
+    const body = await (await get("/preferences")).json();
+    expect(body.alpha).toBe(1);
+    expect(body.beta).toEqual({ nested: true });
   });
 });

@@ -42,6 +42,17 @@ function openDb(path = DB_PATH) {
       is_availability_change INTEGER NOT NULL DEFAULT 0
     );
 
+    -- Per-site key/value store for homeowner preferences (favourites,
+    -- room defaults, etc.). value holds a JSON-serialised payload of any
+    -- shape. Composite PK gives both isolation and the lookup index.
+    CREATE TABLE IF NOT EXISTS preferences (
+      site_id    TEXT NOT NULL,
+      key        TEXT NOT NULL,
+      value      TEXT NOT NULL,
+      updated_at TEXT NOT NULL,
+      PRIMARY KEY (site_id, key)
+    );
+
     CREATE INDEX IF NOT EXISTS idx_site_events_ts
       ON site_events(timestamp);
 
@@ -199,6 +210,44 @@ export function getDeviceHistory(entityId, { since = null, limit = 200 } = {}) {
       "SELECT * FROM device_history WHERE entity_id = ? ORDER BY timestamp DESC LIMIT ?",
     )
     .all(entityId, limit);
+}
+
+// -- preferences --------------------------------------------------------------
+
+// Reads a single preference. Returns the deserialised value, or null when the
+// key has never been set for this site. Note: a key explicitly set to JSON
+// null is indistinguishable from "unset" -- both yield null, which is the
+// correct behaviour for a settings store.
+export function getPreference(siteId, key) {
+  const db = getDb();
+  const row = db
+    .prepare("SELECT value FROM preferences WHERE site_id = ? AND key = ?")
+    .get(siteId, key);
+  return row ? JSON.parse(row.value) : null;
+}
+
+// Returns every preference for a site as a plain { key: value } map.
+export function getAllPreferences(siteId) {
+  const db = getDb();
+  const rows = db
+    .prepare("SELECT key, value FROM preferences WHERE site_id = ?")
+    .all(siteId);
+  return Object.fromEntries(rows.map((r) => [r.key, JSON.parse(r.value)]));
+}
+
+// Upserts a preference. value may be any JSON-serialisable payload (object,
+// array, string, number, boolean, or null). Returns the saved record.
+export function setPreference(siteId, key, value) {
+  const db = getDb();
+  const updatedAt = new Date().toISOString();
+  db.prepare(
+    `INSERT INTO preferences (site_id, key, value, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(site_id, key) DO UPDATE SET
+       value      = excluded.value,
+       updated_at = excluded.updated_at`,
+  ).run(siteId, key, JSON.stringify(value), updatedAt);
+  return { key, value, updatedAt };
 }
 
 // -- pruning ------------------------------------------------------------------
