@@ -4,34 +4,36 @@ This file is updated automatically at every checkpoint and stage
 completion. If starting a new session, read this file first.
 
 ## Current stage
-Stage 0 (end-to-end spike) -- COMPLETE
+Stage 1 (ha-core WebSocket client) -- COMPLETE
 
 ## Last completed
-Stage 0 spike validated the full path end to end: browser button -> Node
-WebSocket script -> HA call_service -> real light (light.bed_light) toggled
-off->on->off, cross-checked against HA /api/states. Committed on the `spike`
-branch (6b0cc39); throwaway, not built upon.
+Stage 1: ws-client.js built and tested against live HA. Connects, authenticates,
+subscribes to state_changed, populates entity cache via get_states, exposes
+getState/getAllStates/subscribe. Exponential backoff reconnect (1s base, 30s cap).
+4 integration tests passed -- 5 events in 2.5s. Committed on stage-1-ws-client
+branch (56b8ae8).
 
 ## In progress
 Nothing.
 
 ## Next action
-Stage 1: build packages/ha-core/src/ws-client.js -- HA WebSocket client with
-auth, reconnection (exponential backoff, 30s cap), events
-(connected/disconnected/state_changed/error), state_changed subscription,
-local entity cache (Map), and getState/getAllStates/subscribe. Test: log 5
-state_changed events from live HA. MCP schedule for Stage 1: Filesystem +
-hass-mcp. See STAGE 1 in docs/HA_PROJECT_KICKOFF_PROMPT.md.
+Stage 2: build packages/ha-core/src/entities.js -- entity normalisation.
+Normalises raw HA entity objects into { id, domain, name, state, attributes,
+lastChanged }. Handles 9 domains. Exposes normaliseEntity(raw),
+getEntitiesByDomain(domain), getEntitiesByRoom(roomId). Filters internal HA
+entities. MCP schedule: Filesystem + hass-mcp.
+IMPORTANT: Stage 2 requires Opus 4.8 + xhigh effort (data shape decisions
+affect everything downstream). Tell user to type /model claude-opus-4-8
+and /effort xhigh before proceeding.
 
 ## Open decisions
-- ha-key.txt in repo root is a leaked Claude credential (gitignored, not yet
-  removed/rotated) -- handle later.
-- spike/.ha-token holds the live HA long-lived token (gitignored on both
-  master and spike). Revoke it in HA after the spike if desired.
+- spike/.ha-token and ha-key.txt deleted from working tree this session
+  (both were gitignored). No rotation needed unless the spike HA token
+  was shared or exposed outside this machine.
 
 ## Last commit
-master: docs -- record Stage 0 spike result (this commit)
-spike branch: 6b0cc39 chore(spike): Stage 0 end-to-end spike
+stage-1-ws-client: 56b8ae8 feat(ha-core): Stage 1 -- HA WebSocket client
+master: 99b31fb docs: record Stage 0 end-to-end spike result
 
 ## Context reset prompt location
 onboarding/staff/CLAUDE_CODE_WORKFLOW.md
