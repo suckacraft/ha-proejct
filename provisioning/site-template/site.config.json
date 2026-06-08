@@ -55,17 +55,58 @@
     }
   ],
   "scenes": [
-    { "id": "morning", "name": "Morning", "icon": "sunrise", "sceneId": "scene.morning" },
-    { "id": "away", "name": "Away", "icon": "home-off", "sceneId": "scene.away" },
-    { "id": "evening", "name": "Evening", "icon": "sunset", "sceneId": "scene.evening" },
-    { "id": "movie", "name": "Movie", "icon": "film", "sceneId": "scene.movie" },
-    { "id": "sleep", "name": "Sleep", "icon": "moon", "sceneId": "scene.sleep" }
+    {
+      "id": "morning",
+      "name": "Morning",
+      "icon": "sunrise",
+      "sceneId": "scene.morning"
+    },
+    {
+      "id": "away",
+      "name": "Away",
+      "icon": "home-off",
+      "sceneId": "scene.away"
+    },
+    {
+      "id": "evening",
+      "name": "Evening",
+      "icon": "sunset",
+      "sceneId": "scene.evening"
+    },
+    {
+      "id": "movie",
+      "name": "Movie",
+      "icon": "film",
+      "sceneId": "scene.movie"
+    },
+    {
+      "id": "sleep",
+      "name": "Sleep",
+      "icon": "moon",
+      "sceneId": "scene.sleep"
+    }
   ],
   "backup": {
     "b2BucketConfig": "smarthome-SITE_ID_HERE-config",
     "b2BucketClips": "smarthome-SITE_ID_HERE-clips",
     "retentionDaysConfig": 90,
     "retentionDaysClips": 90
+  },
+  "devices": {
+    "zigbeeEnabled": true,
+    "zwaveEnabled": false,
+    "bluetoothEnabled": true,
+    "rtlSdrEnabled": false,
+    "matterEnabled": false,
+    "deviceCount": {
+      "zigbee": 0,
+      "zwave": 0,
+      "ip": 0,
+      "bluetooth": 0,
+      "rf433": 0,
+      "matter": 0,
+      "total": 0
+    }
   },
   "notes": ""
 }

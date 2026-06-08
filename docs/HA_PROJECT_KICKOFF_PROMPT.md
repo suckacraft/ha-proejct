@@ -952,6 +952,18 @@ Requirements:
   access -- with no hand-editing of JSON or credentials required
 - A PROVISIONING.md document describing the end-to-end on-site process,
   written so your electrician co-founder could follow it without you
+- Automated device discovery (required -- replaces the manual checklist in
+  provisioning/PROVISIONING.md):
+  - Enable Zigbee2MQTT permit_join with a 4-minute CLI countdown timer
+  - Configure NMAP Tracker with the site subnet from site.config.json
+  - Enable the HA Bluetooth integration automatically
+  - If rtlSdrEnabled is true in site.config.json, prompt the installer to
+    trigger each 433MHz device to register it in HA
+  - Generate an inventory report at completion: device count per protocol,
+    any unidentified devices flagged for manual review
+  - Write final device counts back to site.config.json deviceCount fields
+  The manual checklist in provisioning/PROVISIONING.md is the specification --
+  build the script to match it exactly, step for step.
 
 Test: provision a fresh mock site end to end and confirm the generated
 client.config.json loads correctly in the client-app.

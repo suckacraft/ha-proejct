@@ -119,6 +119,8 @@ Awareness only — do not implement now. Exists so no current decision closes of
 
 **Franchise platform:** operator-app will support multi-tenant franchisee management. Auth in ha-core needs a role system: super-admin, franchisee-admin, technician, client. Design Stage 6.5 auth with this hierarchy in mind even if only super-admin is implemented now.
 
+**Stage 11 device discovery automation (required deliverable):** The provisioning script must automate the manual device discovery protocol in provisioning/PROVISIONING.md: auto-configure NMAP with subnet from site.config.json; auto-enable Zigbee2MQTT permit_join for 4 minutes with a CLI countdown timer; auto-enable HA Bluetooth integration; prompt installer to trigger each 433MHz device if rtlSdrEnabled is true in site.config.json; generate a device inventory report at completion showing count per protocol and any unidentified devices; write final device counts back to site.config.json deviceCount fields. The manual checklist is the reference -- build the script to match it exactly.
+
 **Post Stage 11 planned:** Stage 12: React Native client · Stage 13: Kiosk app · Stage 14: Energy dashboard · Stage 15: Multi-room audio · Stage 16: Franchisee management · Stage 17: AI vision · Stage 18: Visual automation builder.
 
 ## Common Commands

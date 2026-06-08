@@ -35,6 +35,11 @@ Queued (dependency order):
 - Stage 9    -- whitelabel validation         [agentic-safe]
 - Stage 10   -- production Docker Compose      [agentic-safe]
 - Stage 11   -- site provisioning             [ALWAYS MANUAL]
+                Includes: automated device discovery (Zigbee permit_join
+                countdown, NMAP subnet config, Bluetooth enable, 433MHz
+                prompt, inventory report, site.config.json deviceCount
+                update). Reference: provisioning/PROVISIONING.md device
+                discovery protocol section.
 
 Post-Stage-11 queue:
 - Stage 12   -- remaining core tiles          [agentic-safe]

@@ -66,6 +66,47 @@ Sign off each section before proceeding to the next.
 
 ---
 
+## Device Discovery Protocol
+
+Run in order during every install. Takes 15-20 minutes.
+
+**IP DEVICES (automatic):**
+- [ ] NMAP Tracker configured with client subnet
+- [ ] First scan complete -- all IP devices visible in HA
+- [ ] Cross-reference with site survey
+
+**ZIGBEE:**
+- [ ] Zigbee2MQTT running and connected to dongle
+- [ ] permit_join enabled 4 minutes, all devices paired
+- [ ] permit_join disabled after pairing complete
+- [ ] All devices showing correct model in Zigbee2MQTT
+
+**Z-WAVE (if applicable):**
+- [ ] Z-Wave JS integration enabled
+- [ ] All devices paired, network map shows good signal
+
+**BLUETOOTH:**
+- [ ] HA Bluetooth integration enabled
+- [ ] All Bluetooth sensors detected and showing readings
+
+**433MHz (if applicable):**
+- [ ] RTL-SDR dongle connected, rtl_433 running via MQTT
+- [ ] Each device triggered once to register in HA
+
+**MATTER/THREAD (if applicable):**
+- [ ] Thread border router added to HA
+- [ ] All Matter/Thread devices discovered automatically
+
+**FINAL INVENTORY:**
+- [ ] Screenshot of all discovered devices in HA
+- [ ] Device count matches site survey
+- [ ] All devices assigned to rooms in client.config.json
+
+NOTE: This manual checklist will be replaced by the Stage 11 provisioning
+script which automates all of the above. Until then this is the standard process.
+
+---
+
 ## Handover
 
 - [ ] Client app installed on all household phones (see CLIENT_HANDOVER.md)
