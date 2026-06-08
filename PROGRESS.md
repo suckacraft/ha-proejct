@@ -25,6 +25,9 @@ See also SESSION_STATE.md for quick-start context for new sessions.
   reactive) since it is read-once at startup
 - client.config.json blocked by write-protect hook -- dummy rooms must be added
   manually before running the dev server
+- postcss.config.js deleted: when present, Vite's PostCSS pipeline intercepts
+  `@import "tailwindcss"` before `@tailwindcss/vite` can handle it, triggering
+  Tailwind's guard error -- fix is to have no postcss.config.js at all
 
 **Test evidence:**
 - 13/13 client-app unit tests pass (config, store, useHA, App shell render)

@@ -4,53 +4,45 @@ This file is updated automatically at every checkpoint and stage
 completion. If starting a new session, read this file first.
 
 ## Current stage
-Stage 4 (client-app foundation) -- COMPLETE
+Stage 4 (client-app foundation) -- COMPLETE, browser confirmed working
 
 ## Last completed
-Stage 4 complete. client-app foundation built on branch stage-4-client-app:
-- loadConfig() + CSS var white-label injection (--color-primary)
+Stage 4 complete. Branch stage-4-client-app, HEAD 143a340:
+- loadConfig() + runtime CSS var white-label injection (--color-primary)
 - Zustand entity store (Map, setEntity, removeEntity)
 - useHA hook (EventSource /api/events, callService POST)
-- App shell: Header, BottomNav (tab state), RoomList (2-col grid)
+- App shell: Header, BottomNav (tab state), RoomList (2-col dark grid)
 - PWA: vite-plugin-pwa manifest + @tailwindcss/vite v4 migration
-- Vite proxy /api → localhost:3001
-- ha-core: wireEvents now normalises before SSE broadcast
+- Vite proxy /api → localhost:3001 (prefix stripped)
+- ha-core: wireEvents exported+injectable, normalises before SSE broadcast
+- PostCSS fix: postcss.config.js deleted -- conflicts with @tailwindcss/vite
 - 81 tests pass (68 ha-core + 13 client-app)
-Branch not yet merged to main.
 
 ## In progress
 Nothing.
 
 ## Next action
-Stage 5: room detail view and entity tiles (lights, switches, sensors, climate).
-Files to build: src/components/rooms/RoomDetail.jsx, src/components/devices/ tiles.
+Stage 5: room detail view + entity tiles (lights, switches, sensors, climate).
+Files to build:
+- src/components/rooms/RoomDetail.jsx (room page, entity list)
+- src/components/devices/ (LightTile, SwitchTile, SensorTile, ClimateTile)
+- Add react-router-dom for navigation (tab → room detail)
 MCP: Filesystem only. Model: Sonnet 4.6. Effort: high.
 
 IMPORTANT for new session:
-- client.config.json rooms array has 3 dummy rooms (Living Room, Bedroom, Kitchen)
-  added for dev testing
+- NO postcss.config.js -- deleted. @tailwindcss/vite handles everything.
+- NO tailwind.config.js -- deleted. Tailwind 4 uses CSS-first config.
 - Vite proxy strips /api prefix before forwarding to ha-core port 3001
-- Tailwind 4 uses @tailwindcss/vite plugin (NOT postcss), no tailwind.config.js
-- --color-primary CSS var is set at runtime by loadConfig(), overrides @theme default
-
-IMPORTANT for new session:
-- Read packages/client-app/package.json to check existing deps
-- Read packages/client-app/client.config.json for current config shape
-- Read packages/client-app/src/ to see existing skeleton files
-- ha-core runs on port 3001; client-app dev server on port 5173 (Vite default)
-- SSE endpoint is GET http://localhost:3001/events
-- REST commands are POST http://localhost:3001/services/:domain/:service
-
-## Open decisions
-- client.config.json rooms are blocked by a write-protect hook -- add dummy rooms
-  manually for dev testing (see Next action above for schema)
+- Tailwind 4: @theme defines --color-primary (compile fallback); loadConfig()
+  overrides it at runtime via style.setProperty
+- client.config.json write-protect hook active -- rooms must be added manually
 - ha-mcp removed from MCP config (not needed until Stage 7)
 
 ## Branch state
-- main: 42fa2e7 (merge commit, ha-core Stages 1-3.5)
-- stage-4-client-app: branched from main, no commits yet
-- stage-1-ws-client: old feature branch, can be deleted after this session
-- spike: throwaway stage 0 spike branch
+- main: 42fa2e7 (ha-core Stages 1-3.5)
+- stage-4-client-app: HEAD 143a340 (Stage 4 complete + PostCSS fix)
+- stage-1-ws-client: old feature branch, safe to delete
+- spike: throwaway, safe to delete
 
 ## Context reset prompt location
 onboarding/staff/CLAUDE_CODE_WORKFLOW.md

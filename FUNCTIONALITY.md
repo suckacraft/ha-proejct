@@ -12,7 +12,9 @@
 - [x] RoomList: 2-col grid, room cards with entity count numeral
 - [x] ha-core: `wireEvents` exported + normalises `new_state` before SSE broadcast; internal entities filtered
 - [x] 13 client-app unit tests pass; 68 ha-core tests pass (81 total)
-- Branch: `stage-4-client-app`
+- [x] PostCSS fix: `postcss.config.js` deleted (conflicts with `@tailwindcss/vite`)
+- [x] Browser confirmed working
+- Branch: `stage-4-client-app`, HEAD 143a340
 
 ## Stage 0: Project Scaffolding
 
