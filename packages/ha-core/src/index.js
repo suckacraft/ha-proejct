@@ -40,6 +40,8 @@ export function createApp() {
 
   app.use(createManageRouter());
 
+  app.get("/", (_req, res) => res.redirect("/manage"));
+
   app.use(
     createRouter({
       wsClient,

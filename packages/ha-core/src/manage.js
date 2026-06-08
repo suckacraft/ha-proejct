@@ -96,7 +96,7 @@ export function createManageRouter({
         port: 3001,
         status: haUp ? "running" : "stopped",
         uptime: haUp ? formatUptime(Date.now() - SERVER_START_TIME) : null,
-        url: "http://localhost:3001",
+        url: "http://localhost:3001/health",
         canRestart: true,
       },
       {
