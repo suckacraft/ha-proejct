@@ -33,6 +33,14 @@
             "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{if(d.includes('test')&&!d.includes('PASS')&&!d.includes('passing')&&!d.includes('Tests:')){process.stderr.write('WARNING: Tests were mentioned but no evidence of passing tests was shown.');}});\""
           }
         ]
+      },
+      {
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"let d='';process.stdin.on('data',c=>d+=c).on('end',()=>{try{const j=JSON.parse(d);const t=j.transcript||[];const recent=t.slice(-5).map(m=>JSON.stringify(m)).join(' ');if(recent.includes('CONTEXT WARNING')||recent.includes('CONTEXT CHECKPOINT'))return;const size=JSON.stringify(t).length;const full=800000;const pct=Math.round((size/full)*100);if(size>full*0.85){process.stdout.write('CONTEXT CHECKPOINT ('+pct+'% full): Per CLAUDE.md rule 20 -- stop current task, update PROGRESS.md with exact state, commit with message checkpoint: context limit approaching -- [current stage], then tell user to start a new session with the context reset prompt from onboarding/staff/CLAUDE_CODE_WORKFLOW.md');process.exit(2);}else if(size>full*0.70){process.stdout.write('CONTEXT WARNING ('+pct+'% full): Per CLAUDE.md rule 20 -- run /compact now with focus: Focus on code structure, API contracts, test results, and architectural decisions. Exclude docs and comments.');process.exit(2);}}catch(e){}});\""
+          }
+        ]
       }
     ]
   }

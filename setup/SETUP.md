@@ -206,6 +206,18 @@ Root cause: npx skills add without -a flag installs to ~/.agents/skills/ but
 Claude Code reads from ~/.claude/skills/ -- different directories.
 Fix: Always use -a claude-code flag: npx skills add <repo> --skill <name> -a claude-code -g
 
+### Issue: Context monitoring rule in CLAUDE.md is best-effort only
+Date discovered: June 2026
+Symptom: Claude misses the 70% compact threshold or hits the context limit before
+acting on it, because the rule relies on Claude's self-reporting of context fill.
+Root cause: CLAUDE.md rule 20 asks Claude to "monitor context usage continuously"
+but Claude has no reliable way to know its own fill percentage mid-turn.
+Fix: Enforce via Stop hook in .claude/settings.json. The hook reads the transcript
+from each Stop event, estimates fill from JSON byte length (full context ≈ 800k
+chars for Opus 4.8 with 200k tokens), and injects a compaction prompt back to
+Claude if fill exceeds 70% (compact) or 85% (checkpoint). This fires automatically
+on every response without Claude needing to self-report.
+
 ### Issue: right-click Open PowerShell missing in Windows 11
 Date discovered: June 2026
 Symptom: No PowerShell option in right-click context menu
@@ -229,6 +241,7 @@ Fix option 3 (permanent): Run this in Administrator PowerShell to restore it:
 | June 2026 | v1.0 | Initial release |
 | June 2026 | v1.1 | Added -y flag to npx skills commands |
 | June 2026 | v1.2 | Fixed ha-mcp package name and env vars, fixed docker-compose for Windows, fixed skills agent targeting, added Demo integration auto-setup, direct .claude.json write for MCP config |
+| June 2026 | v1.3 | Added context-monitoring Stop hook to .claude/settings.json; documented CLAUDE.md rule 20 enforcement limitation |
 
 ---
 
