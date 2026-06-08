@@ -4,36 +4,36 @@ This file is updated automatically at every checkpoint and stage
 completion. If starting a new session, read this file first.
 
 ## Current stage
-Stage 1 (ha-core WebSocket client) -- COMPLETE
+Stage 2 (entity normalisation) -- COMPLETE
 
 ## Last completed
-Stage 1: ws-client.js built and tested against live HA. Connects, authenticates,
-subscribes to state_changed, populates entity cache via get_states, exposes
-getState/getAllStates/subscribe. Exponential backoff reconnect (1s base, 30s cap).
-4 integration tests passed -- 5 events in 2.5s. Committed on stage-1-ws-client
-branch (56b8ae8).
+Stage 2: entities.js normalises 118 real HA entities into clean internal
+envelope { id, domain, name, state, attributes, lastChanged }. 9 product
+domains get curated camelCase contracts; 29 others pass through. 32 regression
+tests pass against real captured fixtures. Live run confirmed across 38 domains
+with zero internal entity leakage. Committed on stage-1-ws-client (3c472e2).
 
 ## In progress
 Nothing.
 
 ## Next action
-Stage 2: build packages/ha-core/src/entities.js -- entity normalisation.
-Normalises raw HA entity objects into { id, domain, name, state, attributes,
-lastChanged }. Handles 9 domains. Exposes normaliseEntity(raw),
-getEntitiesByDomain(domain), getEntitiesByRoom(roomId). Filters internal HA
-entities. MCP schedule: Filesystem + hass-mcp.
-IMPORTANT: Stage 2 requires Opus 4.8 + xhigh effort (data shape decisions
-affect everything downstream). Tell user to type /model claude-opus-4-8
-and /effort xhigh before proceeding.
+Stage 3: build packages/ha-core/src/api.js and packages/ha-core/src/index.js.
+Express server on port 3001. REST endpoints: GET /entities, GET /entities/:domain,
+GET /entities/:id, POST /services/:domain/:service, GET /rooms,
+GET /rooms/:id/entities, POST /scenes/:sceneId, GET /health.
+SSE endpoint at /events (browser transport -- NOT WebSocket passthrough).
+Wire ws-client + entities together. Inject room config from client.config.json.
+MCP schedule: Filesystem only (no hass-mcp needed for Stage 3).
+Model: Sonnet 4.6. Effort: high.
 
 ## Open decisions
-- spike/.ha-token and ha-key.txt deleted from working tree this session
-  (both were gitignored). No rotation needed unless the spike HA token
-  was shared or exposed outside this machine.
+- stage-1-ws-client branch holds both Stage 1 and Stage 2 -- rename optional,
+  not required. Ask user if desired.
+- ha-mcp restored in ~/.claude.json but requires Claude Code restart to load.
+  Not needed until Stage 7 (camera feeds).
 
 ## Last commit
-stage-1-ws-client: 56b8ae8 feat(ha-core): Stage 1 -- HA WebSocket client
-master: 99b31fb docs: record Stage 0 end-to-end spike result
+stage-1-ws-client: 3c472e2 feat(ha-core): Stage 2 -- entity normalisation
 
 ## Context reset prompt location
 onboarding/staff/CLAUDE_CODE_WORKFLOW.md

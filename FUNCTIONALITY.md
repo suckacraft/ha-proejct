@@ -9,6 +9,19 @@
 - [x] Docker Compose configuration
 - [x] Development tooling (Prettier, Vitest, Nodemon)
 
+## Stage 2: ha-core entity normalisation
+
+- [x] `entities.js` normalises raw HA entities into `{ id, domain, name, state, attributes, lastChanged }`
+- [x] Curated camelCase attribute contracts for 9 product domains (light, switch, sensor, binary_sensor, climate, camera, lock, media_player, scene)
+- [x] Passthrough for all other domains (38 total in live HA) for forward compatibility
+- [x] `brightnessPct` (0-100) exposed instead of HA's raw 0-255 `brightness`
+- [x] HA naming quirks absorbed: `temperature` -> `targetTemperature`, `humidity` -> `targetHumidity`
+- [x] Internal entity filter (group./automation./script.) with whitelist override
+- [x] `normaliseEntity`, `normaliseEntities`, `getEntitiesByDomain`, `getEntitiesByRoom`
+- [x] 32 fixture-based regression tests (real HA shapes, sanitised tokens) all pass
+- [x] Live integration test: 118 entities normalised across 38 domains, zero internal leakage
+- Branch: `stage-1-ws-client` (commit 3c472e2)
+
 ## Stage 1: ha-core WebSocket client
 
 - [x] `ws-client.js` connects and authenticates to HA WebSocket API
