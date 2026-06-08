@@ -20,9 +20,18 @@ function Stop-Port([int]$port, [string]$label) {
     }
 }
 
-$ScriptDir   = Split-Path -Parent $MyInvocation.MyCommand.Path
-$ProjectRoot = Split-Path -Parent $ScriptDir
-$logDir      = Join-Path $ProjectRoot 'logs'
+$ScriptDir    = Split-Path -Parent $MyInvocation.MyCommand.Path
+$ProjectRoot  = Split-Path -Parent $ScriptDir
+$logDir       = Join-Path $ProjectRoot 'logs'
+$staleLogsFile = Join-Path $ProjectRoot '.stale-logs'
+
+# ── Clear any stale logs from previous runs ───────────────────────────────────
+if (Test-Path $staleLogsFile) {
+    Get-Content $staleLogsFile | ForEach-Object {
+        if (Test-Path $_) { try { Remove-Item $_ -Force } catch {} }
+    }
+    Remove-Item $staleLogsFile -Force
+}
 
 Write-Host ''
 Write-Host 'Stopping Smarthome Platform dev services...' -ForegroundColor Cyan
@@ -37,9 +46,24 @@ if ($orphans) {
     Write-Host ("  killed {0} orphaned node process(es)" -f @($orphans).Count) -ForegroundColor DarkGray
 }
 
+# ── Wait for handles to release before deleting logs ─────────────────────────
+Start-Sleep -Milliseconds 500
+
 if (Test-Path $logDir) {
+    $staleLogs = @()
     Get-ChildItem -Path $logDir -Filter '*.log' -ErrorAction SilentlyContinue |
-        ForEach-Object { try { Remove-Item $_.FullName -Force } catch {} }
-    Write-Host '  log files cleared' -ForegroundColor DarkGray
+        ForEach-Object {
+            try {
+                Remove-Item $_.FullName -Force -ErrorAction Stop
+            } catch {
+                $staleLogs += $_.FullName
+            }
+        }
+    if ($staleLogs.Count -gt 0) {
+        $staleLogs | Set-Content $staleLogsFile -Encoding utf8
+        Write-Host ("  {0} log file(s) still locked -- queued for deletion on next run" -f $staleLogs.Count) -ForegroundColor DarkGray
+    } else {
+        Write-Host '  log files cleared' -ForegroundColor DarkGray
+    }
 }
 Write-Host ''

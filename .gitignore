@@ -13,3 +13,4 @@ ha-key.txt
 spike/.ha-token
 logs/
 .pids
+.stale-logs

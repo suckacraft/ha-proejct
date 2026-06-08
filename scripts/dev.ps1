@@ -64,8 +64,18 @@ npm run dev -w $workspace *> "$logPath"
 }
 
 # ── Set up logs directory ────────────────────────────────────────────────────
-$logDir = Join-Path $ProjectRoot 'logs'
+$logDir        = Join-Path $ProjectRoot 'logs'
+$staleLogsFile = Join-Path $ProjectRoot '.stale-logs'
 if (-not (Test-Path $logDir)) { New-Item -ItemType Directory $logDir | Out-Null }
+
+# Clear stale logs queued from a previous stop that couldn't delete them
+if (Test-Path $staleLogsFile) {
+    Get-Content $staleLogsFile | ForEach-Object {
+        if (Test-Path $_) { try { Remove-Item $_ -Force } catch {} }
+    }
+    Remove-Item $staleLogsFile -Force
+}
+
 Get-ChildItem -Path $logDir -Filter '*.log' -ErrorAction SilentlyContinue |
     ForEach-Object { try { Remove-Item $_.FullName -Force } catch {} }
 
