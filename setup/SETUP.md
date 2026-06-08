@@ -252,6 +252,17 @@ Fix option 3 (permanent): Run this in Administrator PowerShell to restore it:
   New-Item -Path "$p\command" -Force
   Set-ItemProperty -Path "$p\command" -Name "(Default)" -Value 'powershell.exe -NoExit -Command "Set-Location -LiteralPath ''%V''"'
 
+### Issue: PowerShell 5.1 script encoding -- avoid em dashes in strings
+Date discovered: June 2026
+Symptom: "The string is missing the terminator" parse error in PowerShell scripts.
+Missing closing braces cascade from the unterminated string.
+Root cause: PowerShell 5.1 on Windows parses .ps1 files as Windows-1252 by default.
+The UTF-8 em dash (U+2014, bytes E2 80 94) has byte 0x94 which Windows-1252
+interprets as a right curly double-quote, closing the string prematurely.
+Fix: Never use em dashes (--) inside PowerShell string literals.
+Use a plain hyphen (-) or double hyphen (--) instead.
+Em dashes in comments are safe (parser ignores comment content).
+
 ### Issue: Tailwind 4 + Vite -- never create postcss.config.js
 Date discovered: June 2026
 Symptom: Browser shows PostCSS error: "trying to use tailwindcss directly as a
@@ -287,6 +298,7 @@ notifications.
 | June 2026 | v1.3 | Added context-monitoring Stop hook to .claude/settings.json; documented CLAUDE.md rule 20 enforcement limitation |
 | June 2026 | v1.4 | Added stale ha-core gotcha: SSE stops working if server runs old code after a commit |
 | June 2026 | v1.5 | Added Tailwind 4 postcss.config.js and iOS Web Push known issues; expanded the stale ha-core restart steps for PowerShell |
+| June 2026 | v1.6 | Added PowerShell 5.1 encoding gotcha: em dashes in string literals cause unterminated string parse errors |
 
 ---
 
