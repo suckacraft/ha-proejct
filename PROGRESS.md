@@ -2,6 +2,66 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-08 — Dev tooling + management dashboard + provisioning docs
+
+**Status:** Complete (branch: stage-5-room-detail). No application logic changed.
+All commits are tooling, infrastructure, and documentation.
+
+**Commits this session, in order:**
+- `ce39e57` — tooling: dev launcher scripts and .env.local template
+- `8d4d9ea` — fix: dev scripts Windows PowerShell 5.1 compatibility
+- `3236075` — fix: operator-app Tailwind 4 and module type config
+- `b46c8f7` — fix: dev.ps1 kills existing processes before starting
+- `bcd1446` — feature: one-click launch + browser management dashboard at /manage
+- `79cfb4f` — fix: management dashboard HTTP health checks
+- `118e966` — feature: restart all services from management dashboard via PID tracking
+- `fca1af8` — polish: service descriptions in management dashboard
+- `bc0dae9` — fix: ha-core root redirect to /manage and health URL in dashboard
+- `25a6fbd` — fix: dev.ps1 syntax error in watch loop
+- `843e6bd` — docs: add PowerShell encoding known issue to SETUP.md
+- `98205dc` — fix: clear log files on stop and start to prevent file lock errors
+- `d5ed65f` — fix: log file lock -- use stream redirection instead of Tee-Object
+- `ab15113` — provisioning: device discovery protocol documented and wired into Stage 11
+- `b3c0076` — fix: write-protect hook path-specific not pattern-match
+- `0b979eb` — fix: stop.ps1 timing -- wait for process handle release before deleting logs
+
+**What was built:**
+
+Dev tooling suite (scripts/):
+- `dev.ps1`: launches ha-core, client-app, operator-app in separate PowerShell windows
+  with auto-relaunch watch loop if any service exits. Writes `.pids` for dashboard
+  restart support. Clears logs and stale-logs on each launch.
+- `stop.ps1`: kills all services by port, kills orphaned node processes, waits 500ms
+  for handle release, deletes logs. Any still-locked logs written to `.stale-logs`
+  for cleanup on next run.
+- `start.bat`: one-click launcher for the whole platform.
+- `.env.local`: template for HASS_TOKEN/HASS_URL.
+
+Management dashboard (`/manage`, ha-core):
+- Browser dashboard at http://localhost:3001/manage showing all four services
+  (ha-core, client-app, operator-app, home-assistant) with status badges, port,
+  plain-English descriptions, and action buttons.
+- Health checks use HTTP GET (not TCP socket) -- fixes false STOPPED for Vite/client-app.
+- Restart buttons work for all services: ha-core via exit(1)/nodemon, client-app and
+  operator-app via PID kill from `.pids` + dev.ps1 auto-relaunch.
+- `GET /` on ha-core redirects to `/manage` instead of blank error page.
+
+Provisioning docs:
+- `PROVISIONING.md`: Device Discovery Protocol section added (IP/Zigbee/Z-Wave/
+  Bluetooth/433MHz/Matter checklists, final inventory).
+- `site.config.json`: `devices` block added (protocol flags + deviceCount fields).
+- `CLAUDE.md`, `HA_PROJECT_KICKOFF_PROMPT.md`, `PIPELINE_PROMPT.md`: Stage 11
+  device discovery automation wired in as a required deliverable.
+
+Infrastructure fixes:
+- Write-protect hook updated to path-specific matching (was blocking all config.json).
+- PowerShell encoding gotcha documented in SETUP.md (em dashes in string literals).
+- Log file lock root cause fixed: Tee-Object pipeline replaced with `*>` redirection.
+
+**Test evidence:** (see below -- run at checkpoint)
+
+**Next:** LightTile mobile polish at 375px, then Stage 6 (scenes tab).
+
 ## 2026-06-08 — Session close: documentation refresh + housekeeping
 
 **Status:** Complete (branch: stage-5-room-detail). Documentation-only session

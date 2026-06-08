@@ -83,11 +83,11 @@ describe("POST /api/manage/restart/ha-core", () => {
 });
 
 describe("POST /api/manage/restart/:service", () => {
-  it("returns cannot-restart message for non-ha-core services", async () => {
+  it("returns 404 when no PID is on file for the service", async () => {
+    // No .pids file exists in the test environment, so readPids() returns {}
     const res = await post("/api/manage/restart/client-app");
-    expect(res.status).toBe(200);
+    expect(res.status).toBe(404);
     const body = await res.json();
-    expect(body.message).toMatch(/cannot restart client-app/i);
-    expect(body.message).toMatch(/start\.bat/i);
+    expect(body.message).toMatch(/no pid for client-app/i);
   });
 });

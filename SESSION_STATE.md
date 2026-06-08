@@ -7,15 +7,14 @@ completion. If starting a new session, read this file first.
 LightTile mobile polish (pre-Stage 6)
 
 ## Last completed
-Home screen dashboard + colour sheet UX improvements (commits `e9eb8a9` and `029f02f`).
+Full dev tooling suite + management dashboard + provisioning device discovery
+protocol. All dev scripts stable. No application logic changed this session.
 
 ## In progress
-LightTile mobile polish -- bottom sheet size, swatch grid layout, touch targets,
-active colour indication.
+Nothing -- clean stopping point.
 
 ## Next action
-Complete LightTile mobile polish, verify at 375px in browser, then start Stage 6
-(scenes tab).
+LightTile mobile polish at 375px viewport, then Stage 6 (scenes tab).
 
 ## Open decisions
 None.
@@ -23,7 +22,7 @@ None.
 ## Branch state
 - main: 42fa2e7 (ha-core Stages 1-3.5)
 - stage-4-client-app: 143a340 (Stage 4 complete)
-- stage-5-room-detail: HEAD `2801685` (Stage 5, Stage 5.5 home screen, pre-Stage 6 polish)
+- stage-5-room-detail: HEAD (Stage 5, Stage 5.5 home screen, dev tooling complete)
 - stage-1-ws-client: old branch, safe to delete
 - spike: throwaway, safe to delete
 
