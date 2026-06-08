@@ -18,10 +18,11 @@ class HAWebSocketClient extends EventEmitter {
   #msgId = 1;
   #cache = new Map();
   #subscribers = new Map();
-  #pendingRequests = new Map();
+  #pendingRequests = new Map(); // id -> { resolve, reject }
   #reconnectAttempts = 0;
   #reconnectTimer = null;
   #stopping = false;
+  #isConnected = false;
 
   constructor({ url, token }) {
     super();
@@ -42,6 +43,7 @@ class HAWebSocketClient extends EventEmitter {
     });
 
     this.#ws.addEventListener("close", () => {
+      this.#isConnected = false;
       if (!this.#stopping) {
         this.emit("disconnected");
         this.#scheduleReconnect();
@@ -61,6 +63,7 @@ class HAWebSocketClient extends EventEmitter {
 
       case "auth_ok": {
         this.#reconnectAttempts = 0;
+        this.#isConnected = true;
 
         this.#send({
           id: this.#msgId++,
@@ -69,10 +72,13 @@ class HAWebSocketClient extends EventEmitter {
         });
 
         const statesId = this.#msgId++;
-        this.#pendingRequests.set(statesId, (states) => {
-          for (const state of states) {
-            this.#cache.set(state.entity_id, state);
-          }
+        this.#pendingRequests.set(statesId, {
+          resolve: (states) => {
+            for (const state of states) {
+              this.#cache.set(state.entity_id, state);
+            }
+          },
+          reject: (err) => this.emit("error", err),
         });
         this.#send({ id: statesId, type: "get_states" });
 
@@ -106,10 +112,9 @@ class HAWebSocketClient extends EventEmitter {
         if (handler) {
           this.#pendingRequests.delete(msg.id);
           if (msg.success) {
-            handler(msg.result);
+            handler.resolve(msg.result);
           } else {
-            this.emit(
-              "error",
+            handler.reject(
               new Error(
                 `HA request ${msg.id} failed: ${JSON.stringify(msg.error)}`,
               ),
@@ -156,6 +161,42 @@ class HAWebSocketClient extends EventEmitter {
     }
     this.#subscribers.get(entityId).add(callback);
     return () => this.#subscribers.get(entityId)?.delete(callback);
+  }
+
+  callService(domain, service, serviceData = {}) {
+    if (!this.#isConnected) {
+      return Promise.reject(new Error("Not connected to Home Assistant"));
+    }
+    return new Promise((resolve, reject) => {
+      const id = this.#msgId++;
+      const timer = setTimeout(() => {
+        this.#pendingRequests.delete(id);
+        reject(
+          new Error(`Service call ${domain}.${service} timed out after 10s`),
+        );
+      }, 10_000);
+      this.#pendingRequests.set(id, {
+        resolve: (result) => {
+          clearTimeout(timer);
+          resolve(result);
+        },
+        reject: (err) => {
+          clearTimeout(timer);
+          reject(err);
+        },
+      });
+      this.#send({
+        id,
+        type: "call_service",
+        domain,
+        service,
+        service_data: serviceData,
+      });
+    });
+  }
+
+  get connected() {
+    return this.#isConnected;
   }
 }
 
