@@ -149,6 +149,7 @@
     @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .4; } }
 
     .card-port   { font-size: 0.75rem; color: var(--muted); }
+    .card-desc   { font-size: 0.6875rem; color: #6b7280; line-height: 1.4; }
     .card-uptime { font-size: 0.75rem; color: var(--muted); min-height: 1.1em; }
 
     .card-actions {
@@ -296,6 +297,13 @@
     return status === 'not built' ? 'NOT BUILT' : status.toUpperCase();
   }
 
+  var svcDescriptions = {
+    'ha-core':        'The brain. Connects to Home Assistant, normalises device data, and serves the app. Restart if devices stop updating.',
+    'client-app':     'The homeowner app. What clients see on their phone or tablet. Restart if the app shows stale data or won\'t load.',
+    'operator-app':   'The management dashboard for monitoring all client sites. Not built yet — coming in Stage 8.',
+    'home-assistant': 'The smart home engine. Controls all physical devices. Restart only if automations stop working — takes 60s.'
+  };
+
   function renderCards(services) {
     var html = services.map(function(svc) {
       var isRunning = svc.status === 'running';
@@ -322,6 +330,7 @@
           '<span class="badge ' + bc + '">' + lbl + '</span>' +
         '</div>' +
         '<div class="card-port">Port ' + svc.port + '</div>' +
+        '<div class="card-desc">' + (svcDescriptions[svc.name] || '') + '</div>' +
         '<div class="card-uptime">' + (svc.uptime ? 'up ' + svc.uptime : '') + '</div>' +
         '<div class="card-actions">' + actionHtml + '</div>' +
       '</div>';
