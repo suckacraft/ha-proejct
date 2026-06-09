@@ -44,39 +44,46 @@ function AppContent() {
   const isRoomDetail = /^\/rooms\/.+/.test(location.pathname);
 
   return (
-    <div className="flex flex-col h-dvh bg-canvas text-white font-sans overflow-hidden">
-      {!isHome && (
-        <Header
-          clientName={config.clientName}
-          logoUrl={config.logoUrl}
-          onBack={isRoomDetail ? () => navigate(-1) : undefined}
-        />
-      )}
-      <main className="flex-1 overflow-y-auto">
-        <Routes>
-          <Route path="/" element={<Navigate to="/home" replace />} />
-          <Route
-            path="/home"
-            element={
-              <HomeScreen
-                rooms={config.rooms}
-                scenes={config.scenes ?? []}
-                clientName={config.clientName}
-                firstName={config.firstName}
+    <div className="flex flex-col md:flex-row h-dvh bg-canvas text-white font-sans overflow-hidden">
+      {/* Nav: last in flex-col (phone bottom), first in flex-row (iPad left sidebar) */}
+      <div className="order-last md:order-first shrink-0">
+        <BottomNav />
+      </div>
+      <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
+        {!isHome && (
+          <Header
+            clientName={config.clientName}
+            logoUrl={config.logoUrl}
+            onBack={isRoomDetail ? () => navigate(-1) : undefined}
+          />
+        )}
+        <main className="flex-1 overflow-y-auto">
+          <div className="max-w-screen-xl mx-auto">
+            <Routes>
+              <Route path="/" element={<Navigate to="/home" replace />} />
+              <Route
+                path="/home"
+                element={
+                  <HomeScreen
+                    rooms={config.rooms}
+                    scenes={config.scenes ?? []}
+                    clientName={config.clientName}
+                    firstName={config.firstName}
+                  />
+                }
               />
-            }
-          />
-          <Route path="/rooms" element={<RoomList rooms={config.rooms} />} />
-          <Route
-            path="/rooms/:roomId"
-            element={<RoomDetail rooms={config.rooms} />}
-          />
-          <Route path="/scenes" element={<SceneList scenes={config.scenes ?? []} />} />
-          <Route path="/cameras" element={<Placeholder label="Cameras" />} />
-          <Route path="/settings" element={<Placeholder label="Settings" />} />
-        </Routes>
-      </main>
-      <BottomNav />
+              <Route path="/rooms" element={<RoomList rooms={config.rooms} />} />
+              <Route
+                path="/rooms/:roomId"
+                element={<RoomDetail rooms={config.rooms} />}
+              />
+              <Route path="/scenes" element={<SceneList scenes={config.scenes ?? []} />} />
+              <Route path="/cameras" element={<Placeholder label="Cameras" />} />
+              <Route path="/settings" element={<Placeholder label="Settings" />} />
+            </Routes>
+          </div>
+        </main>
+      </div>
     </div>
   );
 }

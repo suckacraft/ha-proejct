@@ -94,6 +94,19 @@ Nothing — clean stopping point.
 Stage 5.5 (home screen dashboard) and Stage 6 (scenes tab) are complete and
 listed under Complete above. The next stage to build is Stage 6.5.
 
+Stage 5.6: Visual elevation pass — iPad-first PoC polish
+  Surface elevation system (canvas/surface/raised), typography sharpening, spacing
+  rhythm, motion language (tile press, sheet spring, reduced-motion). iPad responsive
+  layout: 2-col home, 3/4-col room grids, sidebar nav on md+. Playwright verified
+  at 4 viewports. Model: Sonnet. Effort: high.
+
+Stage 5.7: Enterprise widget dashboard
+  Variable widget size system (small/medium/large/hero). PoC widget set: lighting,
+  climate, security, cameras, scenes, energy, locks, presence, media, garage —
+  connected where backend exists, mock data where it doesn't. Three-surface layout:
+  phone, tablet, wall (?surface=wall param). Playwright verified at 4 viewports.
+  Model: Sonnet. Effort: high.
+
 Stage 6: Scenes tab — COMPLETE (see above)
 
 
@@ -131,6 +144,9 @@ Stage 11: Site provisioning
   Cloudflare Tunnel setup, Tailscale enrolment, update group assignment. Configures
   the PWA URL; React Native app URL configuration comes later. MCP: filesystem +
   ha-mcp + github.
+  Room creation and deletion flows from HA entity discovery — installer maps HA
+  entities to rooms during provisioning. client.config.json rooms are demo data
+  only; production rooms come from the Stage 11 provisioning workflow.
 
 ## Post Stage 11 Roadmap
 

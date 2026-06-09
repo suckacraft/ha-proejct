@@ -422,7 +422,7 @@ export default function LightTile({
         ) : (
           <>
             <div className="flex items-start justify-between gap-1">
-              <span className="font-display text-base font-semibold uppercase tracking-wider text-white leading-tight">
+              <span className="font-display text-[13px] font-bold uppercase tracking-wide text-white leading-tight line-clamp-2">
                 {entity.name}
               </span>
               <button
@@ -500,18 +500,19 @@ export default function LightTile({
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            {/* Drag handle */}
-            <div
-              className="flex justify-center pt-4 pb-2 touch-none cursor-grab active:cursor-grabbing shrink-0"
-              onPointerDown={handleHandlePointerDown}
-              onPointerMove={handleHandlePointerMove}
-              onPointerUp={handleHandlePointerUp}
-            >
-              <div className="w-16 h-1.5 rounded-full bg-white/20" />
-            </div>
+            {/* Raised header: drag handle + title + close */}
+            <div className="bg-[--color-raised] rounded-t-3xl shrink-0 border-b border-[--color-border]">
+              <div
+                className="flex justify-center pt-4 pb-2 touch-none cursor-grab active:cursor-grabbing"
+                onPointerDown={handleHandlePointerDown}
+                onPointerMove={handleHandlePointerMove}
+                onPointerUp={handleHandlePointerUp}
+              >
+                <div className="w-16 h-1.5 rounded-full bg-white/20" />
+              </div>
 
             {/* Header row: light name + close button */}
-            <div className="flex items-center justify-between px-4 pb-2 shrink-0">
+            <div className="flex items-center justify-between px-4 pb-3 shrink-0">
               <span className="font-display text-[11px] uppercase tracking-widest text-white/40">
                 {entity.name}
               </span>
@@ -532,6 +533,7 @@ export default function LightTile({
                 </svg>
               </button>
             </div>
+            </div>{/* end raised header */}
 
             {/* Scrollable content */}
             <div

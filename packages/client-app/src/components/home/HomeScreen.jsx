@@ -103,176 +103,196 @@ export default function HomeScreen({
     setTimeout(() => setFlashingScene(null), 1500);
   }
 
+  const statusCards = (
+    <>
+      {weatherEntity && (
+        <div className="shrink-0 bg-surface rounded-2xl p-3 border border-[--color-border] min-w-[130px] flex flex-col gap-1">
+          <span className="text-[24px] leading-none">
+            {WEATHER_ICONS[weatherEntity.state] ?? "🌤️"}
+          </span>
+          <div className="flex items-baseline gap-1">
+            <span className="font-display text-[26px] font-bold text-white tabular-nums leading-none">
+              {weatherEntity.attributes?.temperature ?? "—"}
+            </span>
+            <span className="font-sans text-[13px] text-white/40 leading-none">
+              {weatherEntity.attributes?.temperatureUnit ?? "°"}
+            </span>
+          </div>
+          <span className="font-display text-[9px] tracking-widest uppercase text-white/30 leading-none capitalize">
+            {weatherEntity.state.replace(/-/g, " ")}
+          </span>
+        </div>
+      )}
+      <div className="flex flex-wrap gap-2 items-center">
+        {lightsOnCount > 0 && (
+          <div className="rounded-full px-3 py-1.5 border border-[--color-border] inline-flex items-center gap-2">
+            <span className="text-sm leading-none">💡</span>
+            <span className="font-display text-[10px] tracking-widest uppercase text-white/60">
+              {lightsOnCount} light{lightsOnCount !== 1 ? "s" : ""} on
+            </span>
+          </div>
+        )}
+        {tempSensor && (
+          <div className="rounded-full px-3 py-1.5 border border-[--color-border] inline-flex items-center gap-2">
+            <span className="text-sm leading-none">🌡️</span>
+            <span className="font-display text-[10px] tracking-widest uppercase text-white/60">
+              {tempSensor.state}
+              {tempSensor.attributes?.unit}
+            </span>
+          </div>
+        )}
+        {unlockedCount > 0 && (
+          <div className="rounded-full px-3 py-1.5 border border-[--color-border] inline-flex items-center gap-2">
+            <span className="text-sm leading-none">🔓</span>
+            <span className="font-display text-[10px] tracking-widest uppercase text-white/60">
+              {unlockedCount} unlocked
+            </span>
+          </div>
+        )}
+      </div>
+    </>
+  );
+
+  const roomsSection = favouriteRooms.length > 0 && (
+    <div className="flex flex-col gap-3">
+      <span className="font-display text-[11px] tracking-[0.2em] uppercase font-semibold text-white/30">
+        Favourite Rooms
+      </span>
+      <div
+        className="flex gap-3 overflow-x-auto -mx-4 px-4 md:mx-0 md:px-0 md:grid md:grid-cols-2 md:overflow-visible"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {favouriteRooms.map((room) => {
+          const onCount = room.entityIds.filter((id) => {
+            const e = entities.get(id);
+            return e?.domain === "light" && e.state === "on";
+          }).length;
+          return (
+            <button
+              key={room.id}
+              onClick={() => navigate(`/rooms/${room.id}`)}
+              className="shrink-0 bg-surface rounded-2xl p-3 border border-[--color-border] min-w-[120px] md:min-w-[140px] flex flex-col gap-2 text-left active:bg-[--color-raised] active:scale-[0.97] transition-all duration-100"
+            >
+              <span className="font-display text-[11px] uppercase tracking-widest text-white/40 leading-none">
+                {room.name}
+              </span>
+              <span className="font-display text-[28px] font-black text-white leading-none tabular-nums">
+                {onCount}
+              </span>
+              <span className="font-display text-[9px] tracking-[0.15em] uppercase font-semibold text-white/30 leading-none">
+                light{onCount !== 1 ? "s" : ""} on
+              </span>
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const scenesSection = scenes.length > 0 && (
+    <div className="flex flex-col gap-3">
+      <span className="font-display text-[11px] tracking-[0.2em] uppercase font-semibold text-white/30">
+        Scenes
+      </span>
+      <div className="flex flex-wrap gap-2">
+        {scenes.map((scene) => {
+          const isFlashing = flashingScene === scene.id;
+          return (
+            <button
+              key={scene.id}
+              onClick={() => handleScene(scene)}
+              className={[
+                "px-4 py-2.5 rounded-full border font-display text-[10px] tracking-widest uppercase",
+                "transition-all duration-150 active:scale-[0.97]",
+                isFlashing
+                  ? "bg-[--color-primary] border-[--color-primary] text-white"
+                  : "bg-surface border-[--color-border] text-white/60 active:bg-[--color-raised]",
+              ].join(" ")}
+            >
+              {scene.name}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+
+  const nowPlayingSection = playingPlayer && (
+    <div className="flex flex-col gap-3">
+      <span className="font-display text-[11px] tracking-[0.2em] uppercase font-semibold text-white/30">
+        Now Playing
+      </span>
+      <div className="bg-surface rounded-2xl p-3 border border-[--color-border] flex items-center gap-3">
+        {playingPlayer.attributes?.entityPicture ? (
+          <img
+            src={playingPlayer.attributes.entityPicture}
+            alt=""
+            className="w-12 h-12 rounded-xl object-cover shrink-0"
+          />
+        ) : (
+          <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0 text-xl">
+            ♪
+          </div>
+        )}
+        <div className="flex flex-col gap-0.5 min-w-0">
+          <span className="font-display text-[13px] font-bold text-white truncate leading-none">
+            {playingPlayer.attributes?.mediaTitle ?? "Playing"}
+          </span>
+          {playingPlayer.attributes?.mediaArtist && (
+            <span className="font-sans text-[11px] text-white/40 truncate">
+              {playingPlayer.attributes.mediaArtist}
+            </span>
+          )}
+          <span className="font-display text-[9px] tracking-widest uppercase text-white/20 mt-1">
+            {playingPlayer.name}
+          </span>
+        </div>
+      </div>
+    </div>
+  );
+
   return (
-    <div className="p-4 flex flex-col gap-6 pb-8">
-      {/* Header */}
-      <div className="flex flex-col gap-1 pt-1">
+    <div className="p-4 pb-8 flex flex-col gap-6 md:grid md:grid-cols-[1fr_320px] md:grid-rows-[auto_auto_auto] md:items-start md:gap-x-6 md:gap-y-6 md:pt-2">
+      {/* Hero header — col 1, row 1 */}
+      <div className="flex flex-col gap-1 pt-1 md:col-start-1 md:row-start-1">
         <div className="flex items-center justify-between">
-          <span className="font-display text-[13px] tracking-widest uppercase text-white/40">
+          <span className="font-display text-[13px] tracking-[0.2em] uppercase font-semibold text-white/30">
             {clientName}
           </span>
           <span className="font-display text-[13px] tabular-nums text-white/40">
             {formatTime(now)}
           </span>
         </div>
-        <p className="font-display text-[22px] font-bold text-white leading-tight">
+        <p className="font-display text-4xl md:text-5xl font-black text-white leading-tight">
           {getGreeting(now, firstName)}
         </p>
       </div>
 
-      {/* Weather + Active Summary */}
-      {(weatherEntity ||
-        lightsOnCount > 0 ||
-        tempSensor ||
-        unlockedCount > 0) && (
-        <div className="flex gap-3">
-          {weatherEntity && (
-            <div className="shrink-0 bg-surface rounded-2xl p-3 border border-[--color-border] min-w-[130px] flex flex-col gap-1">
-              <span className="text-[22px] leading-none">
-                {WEATHER_ICONS[weatherEntity.state] ?? "🌤️"}
-              </span>
-              <div className="flex items-baseline gap-1">
-                <span className="font-display text-[24px] font-bold text-white tabular-nums leading-none">
-                  {weatherEntity.attributes?.temperature ?? "—"}
-                </span>
-                <span className="font-sans text-[13px] text-white/40 leading-none">
-                  {weatherEntity.attributes?.temperatureUnit ?? "°"}
-                </span>
-              </div>
-              <span className="font-display text-[9px] tracking-widest uppercase text-white/30 leading-none capitalize">
-                {weatherEntity.state.replace(/-/g, " ")}
-              </span>
-            </div>
-          )}
-
-          <div className="flex flex-col gap-2 flex-1 justify-center">
-            {lightsOnCount > 0 && (
-              <div className="bg-surface rounded-xl px-3 py-2 border border-[--color-border] flex items-center gap-2">
-                <span className="text-sm leading-none">💡</span>
-                <span className="font-display text-[10px] tracking-widest uppercase text-white/60">
-                  {lightsOnCount} light{lightsOnCount !== 1 ? "s" : ""} on
-                </span>
-              </div>
-            )}
-            {tempSensor && (
-              <div className="bg-surface rounded-xl px-3 py-2 border border-[--color-border] flex items-center gap-2">
-                <span className="text-sm leading-none">🌡️</span>
-                <span className="font-display text-[10px] tracking-widest uppercase text-white/60">
-                  {tempSensor.state}
-                  {tempSensor.attributes?.unit}
-                </span>
-              </div>
-            )}
-            {unlockedCount > 0 && (
-              <div className="bg-surface rounded-xl px-3 py-2 border border-[--color-border] flex items-center gap-2">
-                <span className="text-sm leading-none">🔓</span>
-                <span className="font-display text-[10px] tracking-widest uppercase text-white/60">
-                  {unlockedCount} unlocked
-                </span>
-              </div>
-            )}
-          </div>
+      {/* Status cards — col 1, row 2 */}
+      {(weatherEntity || lightsOnCount > 0 || tempSensor || unlockedCount > 0) && (
+        <div className="flex gap-3 md:col-start-1 md:row-start-2">
+          {statusCards}
         </div>
       )}
 
-      {/* Favourite Rooms */}
-      {favouriteRooms.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <span className="font-display text-[11px] tracking-widest uppercase text-white/30">
-            Favourite Rooms
-          </span>
-          <div
-            className="flex gap-3 overflow-x-auto -mx-4 px-4"
-            style={{ scrollbarWidth: "none" }}
-          >
-            {favouriteRooms.map((room) => {
-              const onCount = room.entityIds.filter((id) => {
-                const e = entities.get(id);
-                return e?.domain === "light" && e.state === "on";
-              }).length;
-              return (
-                <button
-                  key={room.id}
-                  onClick={() => navigate(`/rooms/${room.id}`)}
-                  className="shrink-0 bg-surface rounded-2xl p-3 border border-[--color-border] min-w-[120px] flex flex-col gap-2 text-left active:bg-white/5"
-                >
-                  <span className="font-display text-[11px] uppercase tracking-widest text-white/40 leading-none">
-                    {room.name}
-                  </span>
-                  <span className="font-display text-[26px] font-bold text-white leading-none tabular-nums">
-                    {onCount}
-                  </span>
-                  <span className="font-display text-[9px] tracking-widest uppercase text-white/30 leading-none">
-                    light{onCount !== 1 ? "s" : ""} on
-                  </span>
-                </button>
-              );
-            })}
-          </div>
+      {/* Scenes — col 1, row 3 */}
+      {scenesSection && (
+        <div className="md:col-start-1 md:row-start-3">
+          {scenesSection}
         </div>
       )}
 
-      {/* Quick Scenes */}
-      {scenes.length > 0 && (
-        <div className="flex flex-col gap-3">
-          <span className="font-display text-[11px] tracking-widest uppercase text-white/30">
-            Scenes
-          </span>
-          <div className="flex flex-wrap gap-2">
-            {scenes.map((scene) => {
-              const isFlashing = flashingScene === scene.id;
-              return (
-                <button
-                  key={scene.id}
-                  onClick={() => handleScene(scene)}
-                  className={[
-                    "px-4 py-2.5 rounded-full border font-display text-[10px] tracking-widest uppercase",
-                    "transition-colors duration-150",
-                    isFlashing
-                      ? "bg-[--color-primary] border-[--color-primary] text-white"
-                      : "bg-surface border-[--color-border] text-white/60 active:bg-white/10",
-                  ].join(" ")}
-                >
-                  {scene.name}
-                </button>
-              );
-            })}
-          </div>
+      {/* Rooms — col 2 on iPad (rows 1-2), normal flow on phone */}
+      {roomsSection && (
+        <div className="md:col-start-2 md:row-start-1 md:row-span-2">
+          {roomsSection}
         </div>
       )}
 
-      {/* Now Playing */}
-      {playingPlayer && (
-        <div className="flex flex-col gap-3">
-          <span className="font-display text-[11px] tracking-widest uppercase text-white/30">
-            Now Playing
-          </span>
-          <div className="bg-surface rounded-2xl p-3 border border-[--color-border] flex items-center gap-3">
-            {playingPlayer.attributes?.entityPicture ? (
-              <img
-                src={playingPlayer.attributes.entityPicture}
-                alt=""
-                className="w-12 h-12 rounded-xl object-cover shrink-0"
-              />
-            ) : (
-              <div className="w-12 h-12 rounded-xl bg-white/10 flex items-center justify-center shrink-0 text-xl">
-                ♪
-              </div>
-            )}
-            <div className="flex flex-col gap-0.5 min-w-0">
-              <span className="font-display text-[13px] font-bold text-white truncate leading-none">
-                {playingPlayer.attributes?.mediaTitle ?? "Playing"}
-              </span>
-              {playingPlayer.attributes?.mediaArtist && (
-                <span className="font-sans text-[11px] text-white/40 truncate">
-                  {playingPlayer.attributes.mediaArtist}
-                </span>
-              )}
-              <span className="font-display text-[9px] tracking-widest uppercase text-white/20 mt-1">
-                {playingPlayer.name}
-              </span>
-            </div>
-          </div>
+      {/* Now playing — col 2 on iPad (row 3), normal flow on phone */}
+      {nowPlayingSection && (
+        <div className="md:col-start-2 md:row-start-3">
+          {nowPlayingSection}
         </div>
       )}
     </div>

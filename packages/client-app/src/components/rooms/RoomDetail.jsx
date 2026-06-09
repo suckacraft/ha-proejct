@@ -49,15 +49,20 @@ export default function RoomDetail({ rooms = [] }) {
   }
 
   return (
-    <div className="p-4 flex flex-col gap-3">
-      <h2 className="font-display text-[13px] tracking-widest uppercase text-white/40">
-        {room.name}
-      </h2>
+    <div className="p-4 flex flex-col gap-4">
+      <div className="flex flex-col gap-0.5 pt-1">
+        <span className="font-display text-[11px] tracking-[0.2em] uppercase font-semibold text-white/30">
+          Room
+        </span>
+        <h2 className="font-display text-3xl md:text-4xl font-black text-white leading-tight">
+          {room.name}
+        </h2>
+      </div>
       <div className="h-px bg-[--color-border]" />
 
       {/* Room default brightness */}
       {persistedDefault !== null ? (
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-3 md:max-w-sm">
           <span className="font-display text-[9px] tracking-widest uppercase text-white/30 shrink-0 tabular-nums">
             Default · {displayDefault}%
           </span>
@@ -100,7 +105,7 @@ export default function RoomDetail({ rooms = [] }) {
         </button>
       )}
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
         {room.entityIds.map((entityId) => {
           const entity = entities.get(entityId);
           if (!entity) return <SkeletonTile key={entityId} />;

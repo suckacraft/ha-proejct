@@ -51,7 +51,12 @@ const TABS = [
 
 export default function BottomNav() {
   return (
-    <nav className="flex bg-surface border-t border-[--color-border] shrink-0">
+    <nav className="
+      flex bg-surface border-[--color-border] shrink-0
+      border-t md:border-t-0 md:border-r
+      flex-row md:flex-col
+      md:w-20 md:h-full md:py-4 md:gap-1
+    ">
       {TABS.map(({ label, path, icon, end }) => (
         <NavLink
           key={label}
@@ -59,9 +64,12 @@ export default function BottomNav() {
           end={end}
           className={({ isActive }) =>
             [
-              "flex-1 flex flex-col items-center justify-center gap-1 py-3 min-h-[56px]",
-              "font-display text-[9px] font-semibold tracking-widest uppercase transition-colors",
-              isActive ? "text-primary" : "text-white/40 active:text-white/70",
+              "flex-1 md:flex-none flex flex-col items-center justify-center gap-1 py-3 md:py-0 min-h-[56px] md:min-h-0",
+              "md:mx-2 md:rounded-xl md:min-h-[60px] md:gap-1.5",
+              "font-display text-[9px] font-semibold tracking-widest uppercase transition-colors duration-150",
+              isActive
+                ? "text-[--color-primary] md:bg-[--color-primary]/10"
+                : "text-white/40 active:text-white/70 md:hover:text-white/60 md:hover:bg-white/5",
             ].join(" ")
           }
         >

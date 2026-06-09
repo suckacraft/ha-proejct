@@ -1,6 +1,6 @@
 export default function Header({ clientName, logoUrl, onBack }) {
   return (
-    <header className="flex items-center gap-3 px-5 h-14 bg-surface border-b border-[--color-border] shrink-0">
+    <header className="md:hidden flex items-center gap-3 px-5 h-14 bg-surface border-b border-[--color-border] shrink-0">
       {onBack && (
         <button
           onClick={onBack}
