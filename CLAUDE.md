@@ -16,6 +16,32 @@
 9. Tailwind CSS only. No custom CSS files beyond the Tailwind directives entry point.
 10. Mobile-first, touch-optimised UI. Min tap target 44px. Design for wall-mounted tablets.
 
+## Design Language (locked at Stage 5.6)
+
+Three surface layers only — never invent a fourth:
+  canvas   #0c0e14  --color-canvas   page background
+  surface  #161920  --color-surface  default card/tile resting state
+  raised   #1e222c  --color-raised   active card, sheet header, overlays
+Depth via borders, not shadows. border-[--color-border] resting; border-[--color-primary]/40 active.
+
+Typography — Display (Barlow Condensed): headings and labels. Body (DM Sans): data values only.
+  Hero: text-5xl font-black tracking-tight
+  Section label: text-[11px] tracking-[0.2em] uppercase font-semibold text-white/30
+  Tile label: text-[13px] font-bold tracking-wide uppercase
+  Badge/micro: text-[9px] font-semibold tracking-[0.15em] uppercase
+Every hierarchy level must change both weight AND size.
+
+Spacing — 8px grid, multiples of 4px only:
+  p-3/gap-3=12px compact  p-4/gap-4=16px default  p-5/gap-5=20px spacious  gap-6=24px major sections
+
+Motion — state transitions: duration-150. Sheet entry: duration-300 ease-[cubic-bezier(0.32,0.72,0,1)].
+  Tile press: active:scale-[0.97] duration-100. @media(prefers-reduced-motion): all durations 0ms.
+
+Tile states — Resting: bg-surface border-[--color-border]. Press: active:bg-[--color-raised] active:scale-[0.97].
+  Active (on): bg-[--color-raised] border-[--color-primary]/40.
+
+--color-primary is the single accent. Never introduce a second accent colour.
+
 ## Workflow Rules
 
 11. All changes via feature branches. Never commit directly to main.
