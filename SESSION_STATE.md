@@ -4,19 +4,19 @@ This file is updated automatically at every checkpoint and stage
 completion. If starting a new session, read this file first.
 
 ## Current stage
-Stage 6 complete — next is Stage 6.5 (authentication)
+Stage 5.7 — enterprise widget dashboard
 
 ## Last completed
-LightTile mobile polish (temp slider value prop fix, close button 44px touch
-target) + Stage 6 scenes tab (SceneTile, SceneList, App.jsx wiring, 5 tests).
+Stage 5.6 visual elevation pass: surface elevation system (canvas/surface/raised),
+iPad responsive layout (sidebar nav, 2-col home, 3/4-col room grids), typography
+sharpening, motion language, compact status badge pills, 6th demo room (Garage).
 124 client-app unit tests passing.
 
 ## In progress
 Nothing -- clean stopping point.
 
 ## Next action
-Stage 6.5: Authentication (ha-core JWT, username/password, PIN convenience layer).
-Switch to Opus 4.8 + xhigh effort before starting.
+Stage 5.7 prompt — awaiting paste from user.
 
 ## Open decisions
 None.
@@ -29,10 +29,10 @@ None.
 - spike: throwaway, safe to delete
 
 ## Model for next session
-claude-opus-4-8 (Stage 6.5 auth requires Opus)
+claude-sonnet-4-6 (Stage 5.7 is Sonnet)
 
 ## Effort for next session
-xhigh
+high
 
 ## IMPORTANT for new session
 - NO postcss.config.js — deleted. @tailwindcss/vite handles everything.
