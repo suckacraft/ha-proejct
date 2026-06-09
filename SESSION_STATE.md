@@ -4,17 +4,19 @@ This file is updated automatically at every checkpoint and stage
 completion. If starting a new session, read this file first.
 
 ## Current stage
-LightTile mobile polish (pre-Stage 6)
+Stage 6 complete — next is Stage 6.5 (authentication)
 
 ## Last completed
-Full dev tooling suite + management dashboard + provisioning device discovery
-protocol. All dev scripts stable. No application logic changed this session.
+LightTile mobile polish (temp slider value prop fix, close button 44px touch
+target) + Stage 6 scenes tab (SceneTile, SceneList, App.jsx wiring, 5 tests).
+124 client-app unit tests passing.
 
 ## In progress
 Nothing -- clean stopping point.
 
 ## Next action
-LightTile mobile polish at 375px viewport, then Stage 6 (scenes tab).
+Stage 6.5: Authentication (ha-core JWT, username/password, PIN convenience layer).
+Switch to Opus 4.8 + xhigh effort before starting.
 
 ## Open decisions
 None.
@@ -27,10 +29,10 @@ None.
 - spike: throwaway, safe to delete
 
 ## Model for next session
-claude-sonnet-4-6
+claude-opus-4-8 (Stage 6.5 auth requires Opus)
 
 ## Effort for next session
-high
+xhigh
 
 ## IMPORTANT for new session
 - NO postcss.config.js — deleted. @tailwindcss/vite handles everything.

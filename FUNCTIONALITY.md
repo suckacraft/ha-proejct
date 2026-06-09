@@ -68,7 +68,8 @@ tell a consistent story.
 - LightTile: card-as-slider drag brightness, full colour control bottom sheet,
   3x3 swatch grid, temperature gradient strip, custom hue/saturation picker,
   server-side favourites via preferences API, room defaults; all modes (onoff,
-  brightness, color_temp, hs, rgb, rgbw, rgbww, combo)
+  brightness, color_temp, hs, rgb, rgbw, rgbww, combo); mobile polish: 75svh
+  sheet, 44px close button touch target, temperature slider value prop fixed
 - SwitchTile: toggle, full card tappable
 - SensorTile: large value display, unit, read-only (also handles binary_sensor)
 - ClimateTile: current/target temp, +/-1C, HVAC mode badge
@@ -76,28 +77,25 @@ tell a consistent story.
 - SkeletonTile: animate-pulse placeholder
 - Preferences store (usePreferencesStore): hydrate() from /api/preferences,
   addFavourite/removeFavourite, saveRoomDefault/clearRoomDefault, setHomeFavourites
+- Scenes tab (/scenes): SceneList + SceneTile, 2-col grid, tap-to-activate with
+  1.5s flash feedback, config-driven from client.config.json scenes array,
+  inline SVG icons (sunrise, home-off, sunset, film, moon + star fallback)
 - Playwright: automated browser verification for LightTile and home screen at 375px
-- 119 client-app unit tests + 6 Playwright browser checks passing; 84 ha-core
-  tests; 203 unit tests total across the workspace
-- Branch: stage-5-room-detail, HEAD 2801685
+- 124 client-app unit tests + 6 Playwright browser checks passing; 84 ha-core
+  tests; 208 unit tests total across the workspace
+- Branch: stage-5-room-detail
 
 ## In Progress
 
-- LightTile UI mobile polish: bottom sheet at 75svh, 3x3 swatch grid, 48px touch
-  targets, temperature thumb with floating kelvin label, active colour indication
-  (scale + white ring + checkmark), favourites kept separate from preset swatches.
-  Core colour control is committed; this is ongoing refinement of the mobile
-  interaction detail.
+Nothing — clean stopping point.
 
-## Planned (Stages 6-11)
+## Planned (Stages 6.5-11)
 
-Stage 5.5 (home screen dashboard) shipped ahead of Stage 6 as pre-Stage-6 work
-and is listed under Complete above. The next stage to build is Stage 6.
+Stage 5.5 (home screen dashboard) and Stage 6 (scenes tab) are complete and
+listed under Complete above. The next stage to build is Stage 6.5.
 
-Stage 6: Scenes tab
-  SceneList, SceneTile, tap-to-activate with 1.5s flash feedback (Option B --
-  no SSE wait for scene confirmation). MCP: filesystem only. Model: Sonnet.
-  Effort: high.
+Stage 6: Scenes tab — COMPLETE (see above)
+
 
 Stage 6.5: Authentication
   ha-core is the auth authority (JWT). Username/password primary, PIN convenience
