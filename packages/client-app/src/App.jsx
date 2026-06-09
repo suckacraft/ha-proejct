@@ -15,6 +15,7 @@ import BottomNav from "./components/shared/BottomNav.jsx";
 import HomeScreen from "./components/home/HomeScreen.jsx";
 import RoomList from "./components/rooms/RoomList.jsx";
 import RoomDetail from "./components/rooms/RoomDetail.jsx";
+import SceneList from "./components/scenes/SceneList.jsx";
 
 function Placeholder({ label }) {
   return (
@@ -70,7 +71,7 @@ function AppContent() {
             path="/rooms/:roomId"
             element={<RoomDetail rooms={config.rooms} />}
           />
-          <Route path="/scenes" element={<Placeholder label="Scenes" />} />
+          <Route path="/scenes" element={<SceneList scenes={config.scenes ?? []} />} />
           <Route path="/cameras" element={<Placeholder label="Cameras" />} />
           <Route path="/settings" element={<Placeholder label="Settings" />} />
         </Routes>

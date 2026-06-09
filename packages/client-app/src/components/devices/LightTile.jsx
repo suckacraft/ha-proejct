@@ -518,7 +518,7 @@ export default function LightTile({
               <button
                 onClick={closeSheet}
                 aria-label="Close"
-                className="w-7 h-7 flex items-center justify-center rounded-full bg-white/10 text-white/50 active:bg-white/20"
+                className="min-h-[44px] min-w-[44px] flex items-center justify-center rounded-full text-white/50 active:text-white/80"
               >
                 <svg
                   viewBox="0 0 24 24"
@@ -565,7 +565,7 @@ export default function LightTile({
                         type="range"
                         min={minTemp}
                         max={maxTemp}
-                        value={colorTempKelvin ?? minTemp}
+                        value={tempDraftVal ?? colorTempKelvin ?? minTemp}
                         aria-label="Color temperature"
                         style={{
                           background:
