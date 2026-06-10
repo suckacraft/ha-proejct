@@ -10,6 +10,29 @@ Both follow the same process from Step 6 onward.
 
 ---
 
+## Deploying the platform stack (client mode)
+
+Once the device has a base OS, a static IP, and SSH (Sections A/B below), the
+entire runtime stack is installed from your laptop in CLIENT mode:
+
+    setup\03-deploy-pi.ps1 -Mode Client -PiIp <site-ip>
+
+Client mode guarantees a hardened device by construction:
+
+- NO `demo:` in configuration.yaml (asserted, and stripped if found)
+- NO ops-agent (removed if present), NO Claude Code, NO dev tooling
+- NO Claude API key on the device
+- Full stack only: Docker, HA Container, Node 20, nginx, ha-core, the PWAs,
+  Tailscale (operator tailnet), and cloudflared
+
+What the pipeline does NOT do, and you still complete manually in Section C:
+SOPS-encrypted secrets, disabling HA auto-update, the per-site Cloudflare Tunnel
+(creation + DNS), the Backblaze B2 restore/backup path, and Tailscale tag/ACL
+enrolment on the operator tailnet. See setup/client-device/DEV_VS_CLIENT.md for
+the full dev-vs-client contrast.
+
+---
+
 ## Hardware decision guide
 
 Use Pi 5 when:

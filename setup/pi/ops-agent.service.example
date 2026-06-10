@@ -1,0 +1,54 @@
+# ============================================================
+# Smart Home Platform -- ops-agent systemd unit (DISABLED STUB)
+# ============================================================
+#
+# HOME PI ONLY. THIS MUST NEVER BE ENABLED ON A CLIENT DEVICE.
+#
+# WHAT THIS IS
+#   A scaffold for a future operations agent that will run only
+#   on the home lab / business demo Pi (piserver). Its intended
+#   job, once built, is:
+#     - summarise ha-core and HA logs into a daily digest
+#     - send a heartbeat to the central client-hub
+#     - triage Frigate person/object detection events
+#   It is a thin Claude API layer (CLAUDE_OPS_API_KEY in .env).
+#
+# WHAT THIS IS NOT
+#   There is NO agent logic in this build. This file is a stub
+#   only. ExecStart points at a script that does not exist yet,
+#   and the unit ships DISABLED and MASKED so it can never run
+#   accidentally. Enabling it is a deliberate future action.
+#
+# CLIENT ISOLATION
+#   Client devices run the core stack ONLY. pi-setup.sh installs
+#   this stub exclusively in --mode home. In --mode client it is
+#   never copied, and the deploy must keep client devices free of
+#   any agent, any Claude API key, and any dev tooling.
+#
+# HOW IT IS HANDLED BY pi-setup.sh (home mode)
+#   1. Copied to /etc/systemd/system/ops-agent.service
+#   2. Left disabled, then masked:  systemctl mask ops-agent
+#   To work on it in future:  systemctl unmask ops-agent
+#                             (and write the ExecStart script first)
+# ============================================================
+
+[Unit]
+Description=Smart Home ops-agent (DISABLED STUB - home Pi only, never on client)
+Documentation=file:///opt/smarthome-platform/setup/pi/PI_SETUP.md
+After=network-online.target ha-core.service
+Wants=network-online.target
+
+[Service]
+Type=simple
+# EnvironmentFile carries CLAUDE_OPS_API_KEY when the agent is built.
+# Path matches where 03-deploy-pi.ps1 places the deployed .env.
+EnvironmentFile=/opt/smarthome-platform/.env
+# Placeholder only. This script intentionally does not exist in
+# this build. Do not create it without an explicit ops-agent task.
+ExecStart=/opt/smarthome-platform/setup/pi/ops-agent/run.sh
+Restart=on-failure
+RestartSec=30
+User=pi
+
+[Install]
+WantedBy=multi-user.target

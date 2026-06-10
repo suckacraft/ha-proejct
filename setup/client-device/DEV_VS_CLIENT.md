@@ -23,6 +23,10 @@ confusion during early installs.
 | HA token stored | In .claude.json on laptop | In SOPS encrypted secrets on device |
 | Tailscale | Your personal tailnet | Operator tailnet (tagged with site name) |
 | Access from laptop | SSH + ha-mcp for Claude Code | SSH via Tailscale only |
+| Deploy mode | 03-deploy-pi.ps1 -Mode Home | 03-deploy-pi.ps1 -Mode Client |
+| ops-agent | Disabled, masked stub (scaffold only) | NEVER installed |
+| Claude Code on device | Installed, reachable via Tailscale SSH | NEVER installed |
+| CLAUDE_OPS_API_KEY | Commented placeholder in .env | NEVER present |
 
 ---
 

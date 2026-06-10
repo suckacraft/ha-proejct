@@ -5,7 +5,64 @@ This guide covers the Pi 5 in two contexts:
 1. DEV/POC use -- your home lab Pi used for learning and building
 2. CLIENT use -- a Pi deployed to a client site as the production hub
 
-The setup is identical up to Step 8. From Step 8, the paths diverge.
+This is the living runbook for the Pi. Sections: Quick Start, What Gets
+Installed, Manual Prerequisites, Manual Steps After Deploy, Future ops-agent
+layer, Known Issues, Update Log.
+
+There are two layers to a Pi build:
+
+- **Manual prerequisites** (first boot): flash the SD, set a static IP, move
+  boot to USB SSD, plug in the Zigbee dongle and Coral TPU. These are physical
+  and one-time, so they stay manual. They are the numbered Steps below.
+- **The deploy pipeline** (automated): once the Pi boots and SSH works, the
+  whole runtime stack is installed from your laptop by the three setup scripts.
+  The old manual Docker and Home Assistant steps (Steps 6 and 8) are now done
+  for you by the pipeline and are kept below as reference only.
+
+---
+
+## Quick Start (the deploy pipeline)
+
+Run from your LAPTOP once the Pi has booted and you can `ssh pi@<pi-ip>`:
+
+    # 1. On the PC (JOSH), as Administrator, ONCE:
+    setup\01-enable-ssh-on-pc.ps1
+
+    # 2. On the laptop, ONCE (persists the Z: drive mapping):
+    setup\02-persist-z-drive.ps1
+
+    # 3. On the laptop: copy the secrets template and fill it in
+    copy setup\pi\.env.example setup\pi\.env
+    notepad setup\pi\.env        # set PC_IP, PI_IP, TS_AUTHKEY, HASS_*, etc.
+
+    # 4. On the laptop: deploy (Home for the lab Pi, Client for a site)
+    setup\03-deploy-pi.ps1 -Mode Home
+    setup\03-deploy-pi.ps1 -Mode Client -PiIp 192.168.1.50
+
+The deploy orchestrator waits for the Pi, zips the repo on the PC, copies it and
+the populated `.env` to the Pi, then runs `pi-setup.sh` on the Pi and streams its
+output back to your laptop in real time.
+
+---
+
+## What Gets Installed (by pi-setup.sh)
+
+| Component | How | Mode |
+|---|---|---|
+| Docker Engine + Compose plugin | official apt repo, arm64 Bookworm | both |
+| Home Assistant | Container, `network_mode: host`, stable image | both |
+| Node 20 LTS | nvm | both |
+| nginx | apt + `setup/pi/nginx/smarthome.conf` | both |
+| Tailscale | install script + `TS_AUTHKEY`, Tailscale SSH on | both |
+| cloudflared | arm64 `.deb` + token service stub | both |
+| ha-core | systemd `ha-core.service` on :3001 | both |
+| client-app + operator-app | `npm ci` + `npm run build`, served by nginx | both |
+| ops-agent stub | disabled + masked systemd unit | **home only** |
+| Claude Code | npm global, reachable via Tailscale SSH | **home only** |
+
+nginx serves client-app on `:80` and operator-app on `:3002`, and proxies
+`/api` to ha-core (`127.0.0.1:3001`) with SSE support. ha-core owns port 3001
+directly; nginx does not add a second listener on it (see Known Issues).
 
 ---
 
@@ -106,6 +163,10 @@ This is how you will manage this device forever -- local or remote.
 
 ## Step 6 -- Install Docker
 
+NOTE: The deploy pipeline (pi-setup.sh) now installs Docker from the official
+apt repo automatically. This manual step is kept for reference and for setting
+up a Pi by hand without the pipeline.
+
     curl -fsSL https://get.docker.com | sh
     sudo usermod -aG docker pi
     newgrp docker
@@ -147,6 +208,10 @@ You can remove the SD card now. The Pi boots from USB SSD permanently.
 ---
 
 ## Step 8 -- Install Home Assistant (same for dev and client)
+
+NOTE: The deploy pipeline (pi-setup.sh) now writes this exact docker-compose.yml
+and starts Home Assistant automatically. This manual step is kept for reference.
+We use Home Assistant CONTAINER (not Supervised) deliberately -- see Known Issues.
 
 Create the HA directory structure:
 
@@ -320,3 +385,89 @@ Paste the Stage 0 prompt from docs/HA_PROJECT_KICKOFF_PROMPT.md
 
     # Shutdown Pi safely (before power off)
     sudo shutdown -h now
+
+---
+
+## Manual Steps After Deploy
+
+The pipeline cannot do these because they need a person or a personal token:
+
+1. Complete the Home Assistant onboarding wizard at `http://<pi-ip>:8123` and
+   create the admin account.
+2. Generate a Long-Lived Access Token (HA profile > Security) and put it in
+   `setup/pi/.env` as `HASS_TOKEN`, then re-deploy (or restart `ha-core`).
+3. Create the Cloudflare Tunnel in the Cloudflare dashboard, copy its token into
+   `CF_TUNNEL_TOKEN`, and re-deploy. Tunnel creation is intentionally manual.
+4. Approve the device in the Tailscale admin console if your tailnet requires it.
+
+---
+
+## Future: ops-agent layer (HOME PI ONLY)
+
+The home lab Pi is also the business demo device. It ships a DISABLED scaffold
+for a future operations agent (`setup/pi/ops-agent.service.example`). Its
+intended future job is log summaries, a client-hub heartbeat, and Frigate event
+triage via a thin Claude API layer (`CLAUDE_OPS_API_KEY`).
+
+Isolation rules (do not break these):
+
+- The ops-agent is installed ONLY in `--mode home`, and even then it is copied
+  in disabled and `systemctl mask`ed. It has no agent logic in this build.
+- A CLIENT device must NEVER have the ops-agent, Claude Code, a Claude API key,
+  or any dev tooling. `pi-setup.sh --mode client` actively removes an ops-agent
+  unit if it finds one and installs none of the home-only tooling.
+- The core stack (HA, ha-core, apps, nginx) is identical on both device classes.
+  The ops-agent is an additive home-only layer, never a dependency of the core.
+
+To work on it in the future: write the `ExecStart` script first, then
+`sudo systemctl unmask ops-agent` and enable it -- on a HOME Pi only.
+
+---
+
+## Reference note: os-agent and why we use HA Container
+
+If you ever evaluate Home Assistant SUPERVISED (the add-on-store flavour), its
+companion package is **os-agent**, latest stable **1.9.0** (2026-05-22, asset
+`os-agent_1.9.0_linux_aarch64.deb`). We do NOT use Supervised on this platform:
+
+- Supervised is officially deprecated ("unsupported with the Home Assistant OS
+  2025.12.0 release") and reports an unhealthy/unsupported state on Pi OS Lite.
+- It would conflict with the Container-based stack this runbook standardises on.
+- ha-core talks to Home Assistant over WebSocket + a long-lived token, so the HA
+  flavour does not matter to the platform.
+
+os-agent 1.9.0 is recorded here only as a reference point, not a dependency.
+
+---
+
+## Known Issues
+
+### Port 3001: ha-core and nginx cannot both bind it
+ha-core listens on `:3001` as its own systemd service. nginx therefore does NOT
+add a second listener on 3001 (two processes cannot bind the same port).
+Instead nginx serves the apps on `:80` and `:3002` and reaches ha-core as an
+upstream at `127.0.0.1:3001` via the `/api/` locations. This is by design.
+
+### SSE live updates break without the right nginx proxy headers
+The `/api/events` proxy MUST set `proxy_buffering off`, `proxy_read_timeout
+3600`, and clear the `Connection` header, or live tile updates stop arriving.
+This is configured in `setup/pi/nginx/smarthome.conf`. Cross-referenced in
+SETUP.md known issues.
+
+### network_mode: host is Linux-only
+The Pi uses `network_mode: host` in its docker-compose.yml. This is correct on
+Linux and wrong on Docker Desktop for Windows (which needs port mapping). Never
+copy a Windows compose file to the Pi. Cross-referenced in SETUP.md.
+
+### demo: must never reach a client device
+`demo:` in `configuration.yaml` creates fake entities. `pi-setup.sh --mode
+client` asserts its absence and strips it if found, failing hard if it cannot.
+
+---
+
+## Update Log
+
+| Date | Version | Change |
+|---|---|---|
+| June 2026 | v1.0 | Initial manual Pi setup guide (flash to operational) |
+| June 2026 | v2.0 | Added the deploy pipeline (01/02/03 + pi-setup.sh): Quick Start, What Gets Installed, Manual Steps After Deploy, Future ops-agent layer, os-agent reference note, Known Issues, Update Log. Docker and HA steps marked automated. |

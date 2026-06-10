@@ -85,6 +85,36 @@ tell a consistent story.
   tests; 208 unit tests total across the workspace
 - Branch: stage-5-room-detail
 
+### Deployment / Operations (Pi pipeline)
+
+- Three-script deploy pipeline (laptop -> PC -> Pi), reusable for the home POC
+  Pi and every client site: `setup/01-enable-ssh-on-pc.ps1` (PC OpenSSH),
+  `setup/02-persist-z-drive.ps1` (persistent Z: mapping via cmdkey),
+  `setup/03-deploy-pi.ps1` (-Mode Home|Client orchestrator: ping-wait, git
+  archive on the PC, SCP to the Pi, run setup streamed live, named exit codes)
+- `setup/pi/pi-setup.sh`: idempotent Pi runtime installer (set -euo pipefail +
+  error trap), --mode home|client. Installs Docker (official apt repo, arm64
+  Bookworm), Home Assistant Container (network_mode: host), Node 20 via nvm,
+  nginx, Tailscale, cloudflared, the ha-core systemd service on 3001, and builds
+  both PWAs. Sources .env, fails by name on missing required vars
+- Two device classes from one script: HOME adds a disabled+masked ops-agent
+  systemd stub and Claude Code; CLIENT installs neither, removes any ops-agent,
+  and asserts/strips `demo:` from configuration.yaml
+- `setup/pi/nginx/smarthome.conf`: :80 client-app, :3002 operator-app, /api
+  proxied to ha-core (127.0.0.1:3001) with a dedicated SSE block (proxy_buffering
+  off, proxy_read_timeout 3600). ha-core owns 3001; nginx adds no second listener
+- `setup/pi/.env.example` (deploy targets + secrets, annotated),
+  `ops-agent.service.example` (HOME-only disabled stub)
+- Home Assistant runs as a Container, not Supervised (Supervised deprecated as of
+  HA OS 2025.12.0). os-agent 1.9.0 recorded as a reference note only
+- Living runbooks: setup/pi/PI_SETUP.md (Quick Start / What Gets Installed /
+  Manual Steps / Known Issues / Update Log + Future ops-agent layer),
+  client-device/CLIENT_DEVICE_SETUP.md, client-device/DEV_VS_CLIENT.md,
+  setup/SETUP.md deploy section, provisioning/PROVISIONING.md client-mode step
+- Verified on the laptop: PowerShell parse-check (0 errors), `bash -n` on both
+  shell scripts, 0 em dashes across all files. Real Pi deploy run manually
+- Branch: pi-deploy-pipeline
+
 ## In Progress
 
 Nothing — clean stopping point.

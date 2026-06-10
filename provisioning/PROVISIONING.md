@@ -39,6 +39,11 @@ Sign off each section before proceeding to the next.
 ## On-site -- platform tasks
 
 - [ ] Mini PC connected to client network
+- [ ] Platform stack deployed in CLIENT mode from the laptop:
+      `setup\03-deploy-pi.ps1 -Mode Client -PiIp <site-ip>` completed cleanly
+- [ ] `demo:` is NOT present in configuration.yaml (client mode asserts and
+      strips it; confirm the deploy did not warn about it)
+- [ ] No ops-agent unit, no Claude Code, no dev tooling on the device (client mode)
 - [ ] Tailscale enrolled on mini PC (operator tailnet)
 - [ ] HA accessible at http://[site-ip]:8123
 - [ ] All Shelly relays discovered in HA

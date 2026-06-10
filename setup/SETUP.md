@@ -315,6 +315,7 @@ notifications.
 | June 2026 | v1.5 | Added Tailwind 4 postcss.config.js and iOS Web Push known issues; expanded the stale ha-core restart steps for PowerShell |
 | June 2026 | v1.6 | Added PowerShell 5.1 encoding gotcha: em dashes in string literals cause unterminated string parse errors |
 | June 2026 | v1.7 | Write-protect hook updated to path-specific matching; documented filename-pattern gotcha |
+| June 2026 | v1.8 | Added the Pi deploy pipeline (setup/01,02,03 + setup/pi/pi-setup.sh, nginx, .env.example, ops-agent stub) and the deploy-pipeline section. Decision: Home Assistant Container, not Supervised (deprecated 2025.12.0). Documented port-3001 ha-core/nginx resolution and SSE proxy requirement in PI_SETUP.md. |
 
 ---
 
@@ -337,6 +338,26 @@ See dedicated guides:
     setup/pi/PI_SETUP.md                          Raspberry Pi 5 from unboxing to operational
     setup/client-device/CLIENT_DEVICE_SETUP.md    Production client device (Pi or mini PC)
     setup/client-device/DEV_VS_CLIENT.md          Key differences -- read before first client install
+
+### Deploy pipeline (laptop -> PC -> Pi)
+
+The whole runtime stack is deployed to a Pi from the laptop by three scripts.
+Development always happens on the laptop; the Pi is never edited directly.
+
+    setup/01-enable-ssh-on-pc.ps1   Run ONCE on the PC (JOSH) as Admin: enable OpenSSH Server
+    setup/02-persist-z-drive.ps1    Run on the laptop: persist Z: -> \\JOSH\smarthome
+    setup/03-deploy-pi.ps1          Run on the laptop: -Mode Home|Client, full deploy orchestrator
+    setup/pi/pi-setup.sh            Runs ON the Pi: installs Docker, HA Container, Node, nginx,
+                                    Tailscale, cloudflared, ha-core service, builds the PWAs
+    setup/pi/.env.example           Secrets template (copy to setup/pi/.env and fill in)
+
+One moded script handles both device classes: HOME (lab/demo, adds a disabled
+ops-agent stub + Claude Code) and CLIENT (full stack only, hardened, no demo).
+Full runbook and Known Issues: setup/pi/PI_SETUP.md.
+
+Note: We use Home Assistant CONTAINER on the Pi (not Supervised). Supervised is
+deprecated as of HA OS 2025.12.0. See PI_SETUP.md Known Issues for the rationale,
+the port-3001 (ha-core vs nginx) resolution, and the SSE proxy requirement.
 
 ### Critical distinction: Docker networking on Windows vs Linux
 

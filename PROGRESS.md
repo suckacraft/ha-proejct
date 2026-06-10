@@ -2,6 +2,78 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-10 - Pi deployment pipeline + franchise ops system
+
+**Status:** Complete (branch: pi-deploy-pipeline). No application logic changed.
+All work is deploy tooling and operations documentation under setup/ and
+provisioning/ only. packages/, ha-core, and app code untouched.
+
+**Decision (hard to reverse, raised before building):**
+- Home Assistant on the Pi is installed as a CONTAINER (docker compose,
+  network_mode: host), NOT Supervised. Fetched the current install sequences as
+  required: HA Supervised is officially deprecated ("unsupported with the Home
+  Assistant OS 2025.12.0 release") and conflicts with the existing Container
+  docs. ha-core talks to HA over WS + token, so the flavour is irrelevant to the
+  platform. os-agent 1.9.0 (2026-05-22) is recorded in PI_SETUP.md as a
+  reference note only. User confirmed Container before any code was written.
+- Port 3001: ha-core owns 3001 as its own systemd service, so nginx does NOT add
+  a second 3001 listener (two processes cannot bind one port). nginx serves the
+  apps on :80 and :3002 and proxies /api to 127.0.0.1:3001 with SSE settings.
+  User confirmed this resolution before pi-setup.sh was written.
+
+**What was built:**
+
+Deploy pipeline (laptop -> PC -> Pi), all scripts print their version at startup:
+- `setup/01-enable-ssh-on-pc.ps1` - PC (JOSH) Admin: install/start OpenSSH
+  Server, Automatic startup, port 22 firewall rule, print IP/user. Idempotent.
+- `setup/02-persist-z-drive.ps1` - laptop: persist Z: -> \\JOSH\smarthome via a
+  stored cmdkey credential (never re-prompts), reconnects if dropped. Idempotent.
+- `setup/03-deploy-pi.ps1` - laptop orchestrator: -Mode Home|Client, ping-wait
+  for the Pi, git archive the repo on the PC, SCP PC->laptop->Pi plus the .env,
+  unzip on the Pi, run pi-setup.sh streamed live. Named exit codes per phase.
+
+Pi-side (`setup/pi/`):
+- `pi-setup.sh` - runtime installer, set -euo pipefail + error trap (line +
+  command), version banner, --mode home|client (defaults to restrictive client),
+  sources .env and fails by name on missing HASS_URL/HASS_TOKEN. Installs Docker
+  (official apt repo, arm64 Bookworm), HA Container (network_mode: host), Node 20
+  via nvm + npm ci, nginx + site config, Tailscale (TS_AUTHKEY, Tailscale SSH),
+  cloudflared (token service stub), ha-core systemd service on 3001, builds both
+  PWAs. Home adds the masked ops-agent stub + Claude Code; client removes any
+  ops-agent and asserts/strips demo: from configuration.yaml.
+- `pi-setup-client.sh` - thin wrapper: exec pi-setup.sh --mode client.
+- `nginx/smarthome.conf` - :80 client-app, :3002 operator-app, /api -> ha-core
+  upstream with a dedicated /api/events SSE block (proxy_buffering off,
+  proxy_read_timeout 3600, Connection cleared, HTTP/1.1).
+- `.env.example` - deploy targets (PC_IP/PC_USER/PI_IP) + TS_AUTHKEY,
+  CF_TUNNEL_TOKEN, HASS_URL, HASS_TOKEN, B2_* and a commented CLAUDE_OPS_API_KEY,
+  each annotated with what it is and where to get it.
+- `ops-agent.service.example` - disabled, masked, HOME-PI-ONLY systemd stub with
+  no agent logic; ExecStart points at a deliberately nonexistent script.
+
+Docs (living runbooks):
+- `PI_SETUP.md` - rewritten into runbook shape: Quick Start, What Gets Installed,
+  Manual Prerequisites, Manual Steps After Deploy, Future ops-agent layer,
+  os-agent reference note, Known Issues (port 3001, SSE headers, host networking,
+  demo:), Update Log v2.0. Docker/HA manual steps marked automated.
+- `client-device/CLIENT_DEVICE_SETUP.md` - added the client-mode deploy section.
+- `client-device/DEV_VS_CLIENT.md` - added deploy mode, ops-agent, Claude Code,
+  CLAUDE_OPS_API_KEY rows.
+- `setup/SETUP.md` - added the deploy-pipeline section + Update Log v1.8.
+- `provisioning/PROVISIONING.md` - added the client-mode deploy step and the
+  explicit "demo: is NOT in configuration.yaml" assertion.
+
+**Test evidence:**
+- All 3 PowerShell scripts parse clean via
+  [System.Management.Automation.Language.Parser]::ParseFile (0 errors each).
+- pi-setup.sh and pi-setup-client.sh pass `bash -n` (shellcheck not on the
+  laptop; nginx -t and live run happen on the Pi during deploy).
+- Em-dash scan: 0 occurrences of U+2014 across all 13 created/modified files.
+- Real Pi deploy is a manual step the user runs (no Pi attached this session).
+
+**Next:** Run `setup\03-deploy-pi.ps1 -Mode Home` against the lab Pi to validate
+end to end, then resume app work at Stage 5.7.
+
 ## 2026-06-08 — Dev tooling + management dashboard + provisioning docs
 
 **Status:** Complete (branch: stage-5-room-detail). No application logic changed.
