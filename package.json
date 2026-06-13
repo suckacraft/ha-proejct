@@ -8,7 +8,8 @@
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
-    "deploy:pi": "./scripts/deploy-pi.sh"
+    "deploy:pi": "./scripts/deploy-pi.sh",
+    "deploy:pages": "npm run build -w packages/client-app && node -e \"require('fs').rmSync('packages/client-app/dist/demo',{recursive:true,force:true})\" && wrangler pages deploy packages/client-app/dist --project-name smarthome-app --commit-dirty=true"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0"

@@ -1,0 +1,8 @@
+name = "smarthome-app"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+[vars]
+# VITE_API_BASE is set as a secret in the Pages dashboard, not here.
+# Local dev: leave unset (Vite proxy handles /api/* -> localhost:3001).
+# Production: set VITE_API_BASE = "https://ha.smartboyz.com" in Pages settings.
