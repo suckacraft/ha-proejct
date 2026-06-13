@@ -1,0 +1,81 @@
+---
+import { site } from "../content/site";
+import Logo from "./Logo.astro";
+const { brand, nav } = site;
+const year = 2026; // build-time constant; bump on rebuild
+---
+
+<footer class="border-t border-border bg-canvas">
+  <div class="mx-auto max-w-6xl px-5 py-12">
+    <div class="flex flex-col gap-8 md:flex-row md:items-start md:justify-between">
+      <div class="max-w-xs">
+        <Logo />
+        <p class="mt-4 text-sm leading-relaxed text-white/50">
+          {brand.tagline} Smart home design, installation and support — done for you.
+        </p>
+      </div>
+
+      <nav class="flex flex-col gap-3" aria-label="Footer">
+        <span
+          class="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30"
+          >Explore</span
+        >
+        {
+          nav.links.map((link) => (
+            <a
+              href={link.href}
+              class="text-sm text-white/70 transition-colors hover:text-white"
+            >
+              {link.label}
+            </a>
+          ))
+        }
+        <a href="/#contact" class="text-sm text-white/70 transition-colors hover:text-white"
+          >Book a consult</a
+        >
+      </nav>
+
+      <div class="flex flex-col gap-3">
+        <span
+          class="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/30"
+          >Get in touch</span
+        >
+        {
+          brand.email && (
+            <a
+              href={`mailto:${brand.email}`}
+              class="text-sm text-white/70 transition-colors hover:text-white"
+            >
+              {brand.email}
+            </a>
+          )
+        }
+        {
+          brand.phone && (
+            <a
+              href={`tel:${brand.phone.replace(/[^+\d]/g, "")}`}
+              class="text-sm text-white/70 transition-colors hover:text-white"
+            >
+              {brand.phone}
+            </a>
+          )
+        }
+        <a
+          href={brand.appUrl}
+          class="text-sm text-white/70 transition-colors hover:text-white"
+          >Existing customer? Open the app →</a
+        >
+      </div>
+    </div>
+
+    <div
+      class="mt-10 flex flex-col gap-3 border-t border-border pt-6 text-xs text-white/40 sm:flex-row sm:items-center sm:justify-between"
+    >
+      <p>&copy; {year} {brand.name}. All rights reserved.</p>
+      <div class="flex gap-5">
+        <a href="/privacy" class="transition-colors hover:text-white/70">Privacy</a>
+        <span>{brand.serviceArea}</span>
+      </div>
+    </div>
+  </div>
+</footer>

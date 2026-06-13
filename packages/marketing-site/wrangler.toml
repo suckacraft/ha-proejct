@@ -1,0 +1,9 @@
+# SmartBoyz marketing site — second Cloudflare Pages project (distinct from
+# smarthome-app, which serves app.smartboyz.com). Serves smartboyz.com + www.
+name = "smartboyz-www"
+compatibility_date = "2024-01-01"
+pages_build_output_dir = "dist"
+
+# Lead forwarding destination (optional). Set in the Pages dashboard as a
+# secret/var instead of committing it here:
+#   LEAD_WEBHOOK_URL = "https://..."   (Slack/Discord/Make/Zapier/email relay)

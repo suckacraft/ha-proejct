@@ -1,0 +1,76 @@
+---
+import { site } from "../content/site";
+import Logo from "./Logo.astro";
+const { nav } = site;
+---
+
+<header
+  class="sticky top-0 z-40 border-b border-border/70 bg-canvas/80 backdrop-blur supports-[backdrop-filter]:bg-canvas/60"
+>
+  <nav
+    class="mx-auto flex h-16 max-w-6xl items-center justify-between px-5"
+    aria-label="Primary"
+  >
+    <Logo />
+
+    <!-- Desktop nav -->
+    <ul class="hidden items-center gap-8 md:flex">
+      {
+        nav.links.map((link) => (
+          <li>
+            <a
+              href={link.href}
+              class="text-sm font-medium text-white/70 transition-colors hover:text-white"
+            >
+              {link.label}
+            </a>
+          </li>
+        ))
+      }
+    </ul>
+
+    <div class="hidden md:block">
+      <a
+        href={nav.cta.href}
+        class="inline-flex items-center rounded-full bg-primary px-5 py-2.5 text-sm font-semibold text-white transition-transform duration-150 hover:brightness-110 active:scale-[0.97]"
+      >
+        {nav.cta.label}
+      </a>
+    </div>
+
+    <!-- Mobile menu: zero-JS via <details> -->
+    <details class="group relative md:hidden">
+      <summary
+        class="flex h-10 w-10 cursor-pointer list-none items-center justify-center rounded-lg border border-border text-white [&::-webkit-details-marker]:hidden"
+        aria-label="Open menu"
+      >
+        <svg class="h-5 w-5 group-open:hidden" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M4 7h16M4 12h16M4 17h16"/></svg>
+        <svg class="hidden h-5 w-5 group-open:block" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"><path d="M6 6l12 12M18 6 6 18"/></svg>
+      </summary>
+      <div
+        class="absolute right-0 mt-2 w-56 rounded-2xl border border-border bg-raised p-2 shadow-xl shadow-black/40"
+      >
+        <ul class="flex flex-col">
+          {
+            nav.links.map((link) => (
+              <li>
+                <a
+                  href={link.href}
+                  class="block rounded-lg px-3 py-2.5 text-sm font-medium text-white/80 transition-colors hover:bg-surface hover:text-white"
+                >
+                  {link.label}
+                </a>
+              </li>
+            ))
+          }
+        </ul>
+        <a
+          href={nav.cta.href}
+          class="mt-1 block rounded-lg bg-primary px-3 py-2.5 text-center text-sm font-semibold text-white"
+        >
+          {nav.cta.label}
+        </a>
+      </div>
+    </details>
+  </nav>
+</header>

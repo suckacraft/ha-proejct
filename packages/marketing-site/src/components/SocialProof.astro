@@ -1,0 +1,60 @@
+---
+import { site } from "../content/site";
+import Icon from "./Icon.astro";
+const { socialProof } = site;
+---
+
+<section class="border-t border-border/60 py-20 md:py-28">
+  <div class="mx-auto max-w-6xl px-5">
+    <!-- Stats band -->
+    <div class="grid gap-4 sm:grid-cols-3">
+      {
+        socialProof.stats.map((s) => (
+          <div class="rounded-2xl border border-border bg-surface p-7 text-center">
+            <p class="font-display text-4xl font-black text-primary md:text-5xl">{s.value}</p>
+            <p class="mt-1 font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+              {s.label}
+            </p>
+          </div>
+        ))
+      }
+    </div>
+
+    <h2 class="mt-16 max-w-2xl font-display text-4xl font-extrabold uppercase tracking-tight md:text-5xl">
+      {socialProof.heading}
+    </h2>
+
+    {/* Real testimonials when available; until then, the trust markers. */}
+    {
+      socialProof.testimonials.length > 0 ? (
+        <div class="mt-10 grid gap-4 md:grid-cols-3">
+          {socialProof.testimonials.map((t) => (
+            <figure class="flex flex-col rounded-2xl border border-border bg-surface p-7">
+              <svg class="h-7 w-7 text-primary/40" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
+                <path d="M9 7H6a3 3 0 0 0-3 3v7h7v-7H6a3 3 0 0 1 3-3V7Zm9 0h-3a3 3 0 0 0-3 3v7h7v-7h-4a3 3 0 0 1 3-3V7Z" />
+              </svg>
+              <blockquote class="mt-4 flex-1 text-[15px] leading-relaxed text-white/80">
+                “{t.quote}”
+              </blockquote>
+              <figcaption class="mt-5 border-t border-border pt-4">
+                <p class="font-display font-bold uppercase tracking-wide">{t.name}</p>
+                <p class="text-sm text-white/40">{t.detail}</p>
+              </figcaption>
+            </figure>
+          ))}
+        </div>
+      ) : (
+        <ul class="mt-10 grid gap-4 sm:grid-cols-2">
+          {socialProof.trustMarkers.map((marker) => (
+            <li class="flex items-start gap-3 rounded-2xl border border-border bg-surface p-6">
+              <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg border border-border bg-raised text-primary">
+                <Icon name="check" class="h-5 w-5" />
+              </span>
+              <span class="text-[15px] leading-relaxed text-white/80">{marker}</span>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+  </div>
+</section>

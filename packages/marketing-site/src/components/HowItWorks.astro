@@ -1,0 +1,33 @@
+---
+import { site } from "../content/site";
+const { howItWorks } = site;
+---
+
+<section id="how-it-works" class="border-t border-border/60 py-20 md:py-28">
+  <div class="mx-auto max-w-6xl px-5">
+    <div class="max-w-2xl">
+      <span
+        class="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-primary"
+        >The process</span
+      >
+      <h2 class="mt-3 font-display text-4xl font-extrabold uppercase tracking-tight md:text-5xl">
+        {howItWorks.heading}
+      </h2>
+      <p class="mt-4 text-lg leading-relaxed text-white/60">{howItWorks.intro}</p>
+    </div>
+
+    <ol class="mt-12 grid gap-4 md:grid-cols-3">
+      {
+        howItWorks.steps.map((step) => (
+          <li class="relative rounded-2xl border border-border bg-surface p-7">
+            <span class="font-display text-5xl font-black text-primary/30">{step.n}</span>
+            <h3 class="mt-3 font-display text-2xl font-bold uppercase tracking-wide">
+              {step.title}
+            </h3>
+            <p class="mt-2 leading-relaxed text-white/60">{step.body}</p>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+</section>

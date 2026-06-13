@@ -1,0 +1,102 @@
+---
+import { Image } from "astro:assets";
+import { site } from "../content/site";
+import wallDisplay from "../assets/screenshots/wall-display.png";
+import Icon from "./Icon.astro";
+const { hero } = site;
+---
+
+<section class="relative overflow-hidden">
+  <!-- Single-accent ambient glow (motion-safe drift). Depth via light, not shadow. -->
+  <div
+    class="pointer-events-none absolute inset-0 -z-10 motion-safe:animate-[drift_18s_ease-in-out_infinite]"
+    aria-hidden="true"
+  >
+    <div
+      class="absolute left-1/2 top-[-10%] h-[600px] w-[900px] -translate-x-1/2 rounded-full bg-primary/20 blur-[140px]"
+    >
+    </div>
+  </div>
+
+  <div class="mx-auto max-w-6xl px-5 pb-16 pt-16 md:pb-24 md:pt-24">
+    <div class="grid items-center gap-12 lg:grid-cols-[1.05fr_1fr]">
+      <!-- Copy -->
+      <div>
+        <span
+          class="inline-flex items-center gap-2 rounded-full border border-border bg-surface px-3 py-1 font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/60"
+        >
+          <span class="h-1.5 w-1.5 rounded-full bg-primary"></span>
+          {hero.eyebrow}
+        </span>
+
+        <h1
+          class="mt-6 font-display text-5xl font-black uppercase leading-[0.92] tracking-tight sm:text-6xl md:text-7xl"
+        >
+          {
+            hero.headlineLines.map((line, i) => (
+              <span class={i === hero.headlineLines.length - 1 ? "block text-primary" : "block"}>
+                {line}
+              </span>
+            ))
+          }
+        </h1>
+
+        <p class="mt-6 max-w-xl text-lg leading-relaxed text-white/70">
+          {hero.subhead}
+        </p>
+
+        <div class="mt-8 flex flex-col gap-3 sm:flex-row sm:items-center">
+          <a
+            href={hero.primaryCta.href}
+            class="inline-flex items-center justify-center gap-2 rounded-full bg-primary px-7 py-3.5 text-base font-semibold text-white transition-transform duration-150 hover:brightness-110 active:scale-[0.97]"
+          >
+            {hero.primaryCta.label}
+            <Icon name="arrow" class="h-4 w-4" />
+          </a>
+          <a
+            href={hero.secondaryCta.href}
+            class="inline-flex items-center justify-center rounded-full border border-border bg-surface px-7 py-3.5 text-base font-semibold text-white/90 transition-colors duration-150 hover:border-primary/40 hover:text-white"
+          >
+            {hero.secondaryCta.label}
+          </a>
+        </div>
+
+        <ul class="mt-8 flex flex-wrap gap-x-6 gap-y-2">
+          {
+            hero.trust.map((t) => (
+              <li class="flex items-center gap-2 text-sm text-white/50">
+                <Icon name="check" class="h-4 w-4 text-primary" />
+                {t}
+              </li>
+            ))
+          }
+        </ul>
+      </div>
+
+      <!-- Product visual (LCP image: eager + high priority) -->
+      <div class="relative">
+        <div
+          class="rounded-3xl border border-border bg-raised p-2 shadow-2xl shadow-black/50"
+        >
+          <Image
+            src={wallDisplay}
+            alt="The SmartBoyz dashboard on a wall-mounted display"
+            class="w-full rounded-2xl"
+            widths={[480, 720, 960]}
+            sizes="(min-width: 1024px) 40vw, 90vw"
+            loading="eager"
+            fetchpriority="high"
+          />
+        </div>
+        <div
+          class="absolute -bottom-4 -left-4 hidden rounded-2xl border border-border bg-surface/90 px-4 py-3 backdrop-blur md:block"
+        >
+          <p class="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40">
+            Every room
+          </p>
+          <p class="font-display text-lg font-bold">One calm dashboard</p>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>

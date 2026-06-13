@@ -1,0 +1,60 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import { site } from "../content/site";
+const { brand } = site;
+---
+
+<BaseLayout
+  title="Privacy"
+  description="How SmartBoyz handles your information."
+  path="/privacy"
+>
+  <section class="mx-auto max-w-3xl px-5 py-20 md:py-28">
+    <h1 class="font-display text-5xl font-black uppercase tracking-tight">Privacy</h1>
+    <p class="mt-4 text-white/50">Last updated: June 2026</p>
+
+    <!-- TODO(content/legal): replace this placeholder with a reviewed privacy policy. -->
+    <div class="mt-10 flex flex-col gap-6 leading-relaxed text-white/70">
+      <p>
+        This is placeholder copy. {brand.name} should replace it with a privacy policy
+        reviewed for your jurisdiction before launch.
+      </p>
+      <div>
+        <h2 class="font-display text-2xl font-bold uppercase tracking-wide text-white">
+          What we collect
+        </h2>
+        <p class="mt-2">
+          When you submit the consult form we collect the details you provide — such as
+          your name, email, phone and a description of your home — solely to respond to
+          your enquiry and arrange a consult.
+        </p>
+      </div>
+      <div>
+        <h2 class="font-display text-2xl font-bold uppercase tracking-wide text-white">
+          How we use it
+        </h2>
+        <p class="mt-2">
+          We use your information to contact you about your enquiry. We do not sell your
+          data. Your smart-home system is designed to be local-first.
+        </p>
+      </div>
+      <div>
+        <h2 class="font-display text-2xl font-bold uppercase tracking-wide text-white">
+          Contact
+        </h2>
+        <p class="mt-2">
+          Questions about your data? Email{" "}
+          {
+            brand.email ? (
+              <a href={`mailto:${brand.email}`} class="text-primary underline-offset-4 hover:underline">
+                {brand.email}
+              </a>
+            ) : (
+              <span>our team</span>
+            )
+          }.
+        </p>
+      </div>
+    </div>
+  </section>
+</BaseLayout>

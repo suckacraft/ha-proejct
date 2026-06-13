@@ -1,0 +1,83 @@
+---
+import { site } from "../content/site";
+const { brand } = site;
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Path only, e.g. "/privacy". Defaults to the current page. */
+  path?: string;
+  ogImage?: string;
+  /** Optional FAQPage entries for rich results. */
+  faqs?: { q: string; a: string }[];
+}
+
+const {
+  title,
+  description = brand.description,
+  path,
+  ogImage = "/og/og-default.png",
+  faqs,
+} = Astro.props;
+
+const siteUrl = Astro.site?.toString().replace(/\/$/, "") ?? "https://smartboyz.com.au";
+const canonical = new URL(path ?? Astro.url.pathname, siteUrl).toString();
+const ogUrl = new URL(ogImage, siteUrl).toString();
+const fullTitle = title ? `${title} · ${brand.name}` : `${brand.name} — ${brand.tagline}`;
+
+const organization = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: brand.name,
+  url: siteUrl,
+  description: brand.description,
+  ...(brand.email ? { email: brand.email } : {}),
+  ...(brand.phone ? { telephone: brand.phone } : {}),
+};
+
+const service = {
+  "@context": "https://schema.org",
+  "@type": "Service",
+  serviceType: "Smart home design, installation and support",
+  provider: { "@type": "Organization", name: brand.name, url: siteUrl },
+  areaServed: brand.serviceArea,
+  description: brand.description,
+};
+
+const faqLd = faqs?.length
+  ? {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      mainEntity: faqs.map((f) => ({
+        "@type": "Question",
+        name: f.q,
+        acceptedAnswer: { "@type": "Answer", text: f.a },
+      })),
+    }
+  : null;
+---
+
+<!-- Primary meta -->
+<title>{fullTitle}</title>
+<meta name="description" content={description} />
+<link rel="canonical" href={canonical} />
+<meta name="theme-color" content="#0c0e14" />
+
+<!-- Open Graph -->
+<meta property="og:type" content="website" />
+<meta property="og:site_name" content={brand.name} />
+<meta property="og:title" content={fullTitle} />
+<meta property="og:description" content={description} />
+<meta property="og:url" content={canonical} />
+<meta property="og:image" content={ogUrl} />
+
+<!-- Twitter -->
+<meta name="twitter:card" content="summary_large_image" />
+<meta name="twitter:title" content={fullTitle} />
+<meta name="twitter:description" content={description} />
+<meta name="twitter:image" content={ogUrl} />
+
+<!-- Structured data -->
+<script type="application/ld+json" set:html={JSON.stringify(organization)} />
+<script type="application/ld+json" set:html={JSON.stringify(service)} />
+{faqLd && <script type="application/ld+json" set:html={JSON.stringify(faqLd)} />}

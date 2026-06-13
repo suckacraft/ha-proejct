@@ -1,0 +1,25 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Icon from "../components/Icon.astro";
+---
+
+<BaseLayout title="Thank you" description="Thanks for reaching out to SmartBoyz." path="/thanks">
+  <section class="mx-auto flex max-w-2xl flex-col items-center px-5 py-28 text-center md:py-36">
+    <span class="flex h-16 w-16 items-center justify-center rounded-2xl border border-primary/40 bg-raised text-primary">
+      <Icon name="check" class="h-8 w-8" />
+    </span>
+    <h1 class="mt-8 font-display text-5xl font-black uppercase tracking-tight">
+      You're on the list.
+    </h1>
+    <p class="mt-4 text-lg leading-relaxed text-white/65">
+      Thanks for reaching out. We'll be in touch shortly to arrange your free consult and
+      start designing your smart home.
+    </p>
+    <a
+      href="/"
+      class="mt-8 inline-flex items-center justify-center rounded-full border border-border bg-surface px-7 py-3.5 text-base font-semibold text-white/90 transition-colors hover:border-primary/40 hover:text-white"
+    >
+      Back to home
+    </a>
+  </section>
+</BaseLayout>

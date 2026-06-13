@@ -1,0 +1,90 @@
+---
+import { Image } from "astro:assets";
+import { site } from "../content/site";
+import phone from "../assets/screenshots/iphone-portrait.png";
+import tablet from "../assets/screenshots/ipad-landscape.png";
+import wall from "../assets/screenshots/wall-display.png";
+const { product } = site;
+---
+
+<section id="product" class="border-t border-border/60 py-20 md:py-28">
+  <div class="mx-auto max-w-6xl px-5">
+    <div class="max-w-2xl">
+      <span
+        class="font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-primary"
+        >The app</span
+      >
+      <h2 class="mt-3 font-display text-4xl font-extrabold uppercase tracking-tight md:text-5xl">
+        {product.heading}
+      </h2>
+      <p class="mt-4 text-lg leading-relaxed text-white/60">{product.intro}</p>
+    </div>
+
+    <div class="mt-12 grid gap-4 lg:grid-cols-3">
+      <!-- Tablet (wide, spans two columns) -->
+      <figure
+        class="overflow-hidden rounded-2xl border border-border bg-surface p-4 lg:col-span-2"
+      >
+        <div class="overflow-hidden rounded-xl border border-border bg-raised">
+          <Image
+            src={tablet}
+            alt={product.shots.tablet.alt}
+            class="w-full"
+            widths={[640, 960, 1280]}
+            sizes="(min-width: 1024px) 60vw, 90vw"
+            loading="lazy"
+          />
+        </div>
+        <figcaption
+          class="mt-3 font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40"
+        >
+          {product.shots.tablet.label}
+        </figcaption>
+      </figure>
+
+      <!-- Phone (tall) -->
+      <figure
+        class="flex flex-col overflow-hidden rounded-2xl border border-border bg-surface p-4"
+      >
+        <div
+          class="mx-auto overflow-hidden rounded-2xl border border-border bg-raised"
+        >
+          <Image
+            src={phone}
+            alt={product.shots.phone.alt}
+            class="h-full w-full max-w-[260px] object-contain"
+            widths={[260, 520]}
+            sizes="260px"
+            loading="lazy"
+          />
+        </div>
+        <figcaption
+          class="mt-3 font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40"
+        >
+          {product.shots.phone.label}
+        </figcaption>
+      </figure>
+
+      <!-- Wall display (wide, spans full width) -->
+      <figure
+        class="overflow-hidden rounded-2xl border border-border bg-surface p-4 lg:col-span-3"
+      >
+        <div class="overflow-hidden rounded-xl border border-border bg-raised">
+          <Image
+            src={wall}
+            alt={product.shots.wall.alt}
+            class="w-full"
+            widths={[720, 1080, 1440]}
+            sizes="(min-width: 1024px) 90vw, 90vw"
+            loading="lazy"
+          />
+        </div>
+        <figcaption
+          class="mt-3 font-display text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40"
+        >
+          {product.shots.wall.label}
+        </figcaption>
+      </figure>
+    </div>
+  </div>
+</section>

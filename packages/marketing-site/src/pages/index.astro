@@ -1,0 +1,26 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import Hero from "../components/Hero.astro";
+import ValueProps from "../components/ValueProps.astro";
+import HowItWorks from "../components/HowItWorks.astro";
+import ProductShowcase from "../components/ProductShowcase.astro";
+import SocialProof from "../components/SocialProof.astro";
+import Pricing from "../components/Pricing.astro";
+import Faq from "../components/Faq.astro";
+import CtaBand from "../components/CtaBand.astro";
+import Contact from "../components/Contact.astro";
+import { site } from "../content/site";
+const { faqs } = site;
+---
+
+<BaseLayout path="/" faqs={faqs.items}>
+  <Hero />
+  <ValueProps />
+  <HowItWorks />
+  <ProductShowcase />
+  <SocialProof />
+  <Pricing />
+  <Faq />
+  <CtaBand />
+  <Contact />
+</BaseLayout>

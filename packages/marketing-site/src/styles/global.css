@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/*
+ * SmartBoyz brand tokens.
+ * NOTE: the marketing site intentionally uses an electric-orange accent
+ * (#f97316, per the brand brief) and DIVERGES from the client app's blue
+ * (#2563eb). The surface scale (canvas/surface/raised) is still shared with
+ * packages/client-app/src/index.css — keep those in sync; the accent is the
+ * deliberate exception. Future: extract to packages/brand/tokens.css.
+ */
+@theme {
+  --color-primary: #f97316;
+  --color-canvas: #0c0e14;
+  --color-surface: #161920;
+  --color-raised: #1e222c;
+  --color-border: #252932;
+  --font-display: "Barlow Condensed", condensed;
+  --font-sans: "DM Sans Variable", "DM Sans", sans-serif;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+html,
+body {
+  background-color: #0c0e14;
+  color: white;
+  font-family: "DM Sans Variable", "DM Sans", sans-serif;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+/* Anchored sections clear the sticky header. */
+:target {
+  scroll-margin-top: 5rem;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    transition-duration: 0ms !important;
+    animation-duration: 0ms !important;
+  }
+}
+
+/* Subtle hero glow drift — single accent only, motion-safe. */
+@keyframes drift {
+  0%,
+  100% {
+    transform: translate3d(0, 0, 0);
+  }
+  50% {
+    transform: translate3d(2%, -3%, 0);
+  }
+}
