@@ -263,3 +263,71 @@ ls ~/client-app/client.config.json
 ```
 
 If missing, copy from the repo: `scp packages/client-app/client.config.json joshsaka@192.168.0.26:~/client-app/`
+
+### dotenv must be imported -- NODE_OPTIONS --env-file is blocked
+
+ha-core reads secrets from `~/ha-core/.env`. The dotenv package is listed as a
+dependency but was not auto-loaded. `NODE_OPTIONS=--env-file=...` is explicitly
+blocked by Node.js security policy and cannot be used via PM2's env block.
+
+**Fix:** `src/index.js` now has `import "dotenv/config"` as its first import.
+This must remain the first line in the file so env vars are set before any other
+module (especially `ws-client.js`) reads `process.env`.
+
+If ha-core logs "HA authentication failed -- check HASS_TOKEN" after the .env
+is in place, confirm the import exists:
+```bash
+head -1 ~/ha-core/src/index.js
+# should print: import "dotenv/config";
+```
+
+### Docker Engine install requires root (and sudo password)
+
+`get.docker.com` installs as root. If the deploy user has no passwordless sudo,
+add it first:
+```bash
+echo 'joshsaka ALL=(ALL) NOPASSWD: ALL' | sudo tee /etc/sudoers.d/joshsaka
+```
+
+After Docker install, add the user to the docker group:
+```bash
+sudo usermod -aG docker joshsaka
+```
+The group change requires a new login session to take effect. Use `sudo docker`
+until then.
+
+### HA onboarding via API (headless)
+
+HA's first-run wizard can be completed headlessly using the onboarding REST API
+and WebSocket. The script at `/tmp/ha-onboard.mjs` (used during provisioning)
+performs all steps:
+
+1. `POST /api/onboarding/users` -- create admin user (requires `name` field in body)
+2. `POST /auth/token` -- exchange auth_code for short-lived access_token
+3. `POST /api/onboarding/core_config` -- set timezone/location
+4. `POST /api/onboarding/analytics` -- accept analytics step
+5. `POST /api/onboarding/integration` -- integration step (may return 400, safe to ignore)
+6. WebSocket `auth/long_lived_access_token` -- mint a 10-year token for ha-core
+
+The long-lived token goes into `~/ha-core/.env` as `HASS_TOKEN`.
+HA admin credentials: username `admin`, URL `http://<pi-ip>:8123`.
+
+### Docker on Pi uses network_mode: host (not port mapping)
+
+On Linux (Pi), `network_mode: host` is correct and required for HA to discover
+local network devices. The Windows dev docker-compose uses `ports: - "8123:8123"`.
+Never copy the Windows compose file to the Pi.
+
+`~/homeassistant/docker-compose.yml` on the Pi:
+```yaml
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    network_mode: host
+    restart: unless-stopped
+    environment:
+      - TZ=Australia/Melbourne
+    volumes:
+      - /home/joshsaka/homeassistant/config:/config
+```
