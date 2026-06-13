@@ -95,8 +95,22 @@ connects.
 ~/client-app/              client PWA build (for ha-core's CLIENT_CONFIG_PATH)
 ```
 
+### Client PWA on Cloudflare Pages (2026-06-13)
+
+| What | Where |
+|---|---|
+| Pages project | `smarthome-app` |
+| Production URL | `https://app.smartboyz.com` |
+| Pages.dev URL | `https://smarthome-app.pages.dev` |
+| Deploy command | `npm run deploy:pages` (build + strip demo/ + wrangler) |
+
+- `VITE_API_BASE=https://ha.smartboyz.com` set in Pages env at build time
+- CORS on Pi: `CLIENT_ORIGIN=https://app.smartboyz.com`
+- ha-core API router mounted at `/api` (consistent in dev + prod)
+- Verified: PWA 200, `/api/entities` 200 with CORS, SSE stream opens
+
 ### Next milestones
 
-- Client PWA build + deploy to Cloudflare Pages
 - Configure HA with actual devices (Zigbee, Shelly, etc.) at client site
 - Playwright smoke test end-to-end through tunnel (toggle light, confirm SSE tile update)
+- Set `VITE_API_BASE` as a Pages environment variable in the dashboard (so `npm run deploy:pages` doesn't need it set locally)
