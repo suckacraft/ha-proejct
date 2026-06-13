@@ -149,3 +149,117 @@ Installer: _______________  Date: _______________
 Electrician: _______________  Date: _______________
 
 Client acknowledged: _______________  Date: _______________
+
+---
+
+## Pi Deployment Known Gotchas
+
+Lessons from the first live Pi deploy. Apply to every subsequent device.
+
+### PM2 + ESM entry-point guard (critical)
+
+ha-core uses `if (process.argv[1] === fileURLToPath(import.meta.url))` to avoid
+running the server when the file is imported in tests. PM2 fork mode replaces
+`process.argv[1]` with its own wrapper (`ProcessContainerFork.js`), so the guard
+always fails -- the process appears `online` in PM2 but never binds a port and
+emits no logs.
+
+**Fix: always run ha-core via `npm start`, not by pointing PM2 at the script directly.**
+
+Working ecosystem.config.cjs:
+```js
+module.exports = {
+  apps: [{
+    name: 'ha-core',
+    script: 'npm',
+    args: 'start',
+    cwd: '/home/joshsaka/ha-core',
+    watch: false,
+    autorestart: true,
+    max_restarts: 10,
+    env: { NODE_ENV: 'production' }
+  }]
+}
+```
+
+Symptoms of the broken config: PM2 shows `online`, `ss -tlnp | grep 3001` returns
+nothing, both PM2 log files are empty.
+
+### Pin Node >=22 in package.json
+
+`better-sqlite3` and the global `WebSocket` object require Node 22+. ha-core
+`package.json` now has `"engines": { "node": ">=22" }`. Verify on each new Pi:
+
+```bash
+node --version   # must be v22.x or higher
+```
+
+If not, install via nvm: `nvm install 22 && nvm use 22 && nvm alias default 22`
+
+### pm2 kill after Node upgrades
+
+After upgrading Node on the Pi (e.g. via nvm), PM2 must be killed and restarted.
+The running PM2 daemon caches the old Node binary path. If the daemon is left
+running after a Node upgrade, `pm2 resurrect` will try to use the old binary.
+
+```bash
+pm2 kill
+pm2 resurrect   # re-links to the new node
+pm2 save
+```
+
+### build-essential required for native modules
+
+`better-sqlite3` compiles a native addon against the running Node version.
+`build-essential` (gcc, make, python3) must be installed before `npm install`:
+
+```bash
+sudo apt install -y build-essential python3
+```
+
+If you see `node-pre-gyp` or `make` errors during `npm install --omit=dev`, this
+is missing.
+
+### Use scp, not rsync -- exclude node_modules
+
+rsync is not installed on Pi OS Lite. Use scp for file transfer. Never copy
+`node_modules` to the Pi -- it will fail with `ENOTEMPTY` and corrupts the
+install. Always run `npm install --omit=dev` on the Pi after copying source:
+
+```bash
+# From the deploy machine (Windows):
+scp -r packages/ha-core/src packages/ha-core/package*.json joshsaka@192.168.0.26:~/ha-core/
+ssh joshsaka@192.168.0.26 "cd ~/ha-core && npm install --omit=dev"
+# Or use the deploy script:
+npm run deploy:pi
+```
+
+### CRLF line endings break bash scripts
+
+Windows git checkouts produce CRLF line endings in .sh files. bash interprets
+the trailing `\r` as part of the command and fails with `$'\r': command not found`.
+
+`.gitattributes` in the repo root enforces `*.sh text eol=lf`. Ensure this file
+is committed before any .sh files are added, or re-normalise with:
+
+```bash
+git add --renormalize .
+git commit -m "fix: normalise line endings"
+```
+
+Test on the Pi: `file scripts/pi-setup.sh` should say "ASCII text" not
+"ASCII text, with CRLF line terminators".
+
+### client.config.json cross-package dependency
+
+ha-core reads `client.config.json` via `CLIENT_CONFIG_PATH` (defaulting to a
+path relative to its cwd that reaches into `../client-app/`). On the Pi, the
+default assumes `~/ha-core/` and `~/client-app/` are siblings. If the directory
+layout differs, set `CLIENT_CONFIG_PATH` explicitly in `~/ha-core/.env`.
+
+Confirm the file exists before starting ha-core:
+```bash
+ls ~/client-app/client.config.json
+```
+
+If missing, copy from the repo: `scp packages/client-app/client.config.json joshsaka@192.168.0.26:~/client-app/`

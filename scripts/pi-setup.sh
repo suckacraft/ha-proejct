@@ -22,7 +22,8 @@ cat > "$PI_HOME/ha-core/ecosystem.config.cjs" << EOFCONFIG
 module.exports = {
   apps: [{
     name: 'ha-core',
-    script: 'src/index.js',
+    script: 'npm',
+    args: 'start',
     cwd: '$PI_HOME/ha-core',
     watch: false,
     autorestart: true,
