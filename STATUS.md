@@ -26,6 +26,39 @@ URL: `http://192.168.0.26:8123`
 
 ---
 
+## Current Stack State
+
+- Pi ha-core: running on PM2 at `192.168.0.26:3001` ✅
+- Home Assistant: running at `192.168.0.26:8123` ✅
+- Cloudflare Tunnel: `ha.smartboyz.com` ✅
+- PWA: `app.smartboyz.com` ✅
+- Deploy pipeline: built, not yet tested (SSH blocked -- see Known Issues)
+
+---
+
+## Known Issues
+
+### SSH key auth not set up between laptop (hooby) and Pi (192.168.0.26)
+
+- **Cause:** `02-harden-pi-ssh.sh` ran before `01-setup-ssh-keys.ps1`, so password
+  auth was disabled before the laptop's public key was distributed to the Pi.
+- **Fix when needed:** plug a keyboard/HDMI into the Pi and run:
+
+  ```bash
+  echo 'ssh-ed25519 AAAAC3NzaC1lZDI1NTE5AAAAIDHHuON1/gWhCfRMbLaFMWuXKj27xclhftNH74q80nPr hooby@MSI' >> ~/.ssh/authorized_keys
+  ```
+
+  Then enable Tailscale SSH so this is reachable remotely in future:
+
+  ```bash
+  sudo tailscale up --ssh
+  ```
+
+- **Impact:** only matters when pushing new code to the Pi via `03-deploy-pi.ps1`.
+  The live stack is unaffected.
+
+---
+
 ## Resolution log
 
 ### Bug 1: PM2 + ESM entry-point guard (2026-06-13)
