@@ -135,3 +135,46 @@ Linux (Pi or mini PC): network_mode:host WORKS and is preferred
 
 Never copy a Windows docker-compose.yml to a Pi or mini PC.
 See setup/client-device/DEV_VS_CLIENT.md for full comparison.
+
+---
+
+## Deployment
+
+ha-core runs persistently on the Pi (192.168.0.26) under PM2 with systemd
+auto-restart on boot. No Docker.
+
+### One-time Pi setup
+
+```bash
+ssh joshsaka@192.168.0.26 'bash -s' < scripts/pi-setup.sh
+```
+
+Then copy the env template to the Pi and fill in your HA token and any
+site-specific overrides:
+
+```bash
+scp packages/ha-core/.env.example joshsaka@192.168.0.26:~/ha-core/.env
+ssh joshsaka@192.168.0.26 "nano ~/ha-core/.env"
+```
+
+### Ongoing deploys
+
+```bash
+npm run deploy:pi
+```
+
+Rsyncs `packages/ha-core/` to the Pi, runs `npm install --production`, and
+restarts the PM2 process. The Pi's `.env` is never overwritten.
+
+### Operations
+
+```bash
+# Process status
+ssh joshsaka@192.168.0.26 "pm2 status"
+
+# Tail logs
+ssh joshsaka@192.168.0.26 "pm2 logs ha-core"
+
+# Restart manually
+ssh joshsaka@192.168.0.26 "pm2 restart ha-core"
+```

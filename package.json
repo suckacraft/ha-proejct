@@ -7,7 +7,8 @@
   ],
   "scripts": {
     "dev": "npm run dev --workspaces --if-present",
-    "build": "npm run build --workspaces --if-present"
+    "build": "npm run build --workspaces --if-present",
+    "deploy:pi": "./scripts/deploy-pi.sh"
   },
   "devDependencies": {
     "@playwright/test": "^1.60.0"
