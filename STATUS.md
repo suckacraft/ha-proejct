@@ -8,6 +8,16 @@
 |---|---|---|---|
 | Home Assistant | Docker Container (`network_mode: host`) | 8123 | running |
 | ha-core | PM2 (`npm start`, fork mode) | 3001 | running, HA WebSocket connected |
+| Tailscale | systemd service | -- | enrolled, IP 100.117.86.4 |
+| Cloudflare Tunnel | systemd service (`cloudflared`) | -- | active, tunnel ha-pi |
+
+### Access
+
+| How | URL / address |
+|---|---|
+| Local LAN | `http://192.168.0.26:3001` |
+| Tailscale | `http://100.117.86.4:3001` |
+| Public (Cloudflare Tunnel) | `https://ha.smartboyz.com` |
 
 ### HA admin account
 Username: `admin`  
@@ -62,6 +72,17 @@ connects.
 - PM2 systemd unit (`pm2-joshsaka.service`) registered and enabled
 - Docker container `homeassistant` set to `restart: unless-stopped`
 
+### Tailscale + Cloudflare Tunnel verified (2026-06-13)
+
+- Tailscale enrolled with `--accept-dns=false` (avoids conflict with HA mDNS)
+- Tailscale IP: `100.117.86.4`
+- Cloudflare Tunnel `ha-pi` (UUID `8ffd2360-1ba1-4702-871f-14f0a450e1a3`) running as systemd service
+- Token-based (remotely managed) -- no cert.pem required
+- Public hostname `ha.smartboyz.com` → `http://localhost:3001`
+- `curl https://ha.smartboyz.com/` → `HTTP/2 302 → /manage` (verified from Pi and Windows)
+- SSE smoke test: `curl -N -H "Accept: text/event-stream" https://ha.smartboyz.com/events` -- stream opened, live `state_changed` events confirmed flowing
+- PM2 logs show `GET / 302` and `GET /events 200` hits from tunnel
+
 ### What lives where on the Pi
 
 ```
@@ -76,6 +97,6 @@ connects.
 
 ### Next milestones
 
+- Client PWA build + deploy to Cloudflare Pages
 - Configure HA with actual devices (Zigbee, Shelly, etc.) at client site
-- Test SSE live updates end-to-end from Pi to browser client
-- Harden: nginx reverse proxy in front of ha-core + HA, Tailscale, Cloudflare Tunnel
+- Playwright smoke test end-to-end through tunnel (toggle light, confirm SSE tile update)

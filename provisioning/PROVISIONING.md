@@ -312,6 +312,59 @@ performs all steps:
 The long-lived token goes into `~/ha-core/.env` as `HASS_TOKEN`.
 HA admin credentials: username `admin`, URL `http://<pi-ip>:8123`.
 
+### Tailscale: always use --accept-dns=false on Pi
+
+HA uses mDNS (Avahi) for local device discovery. Tailscale's default DNS
+configuration overrides `/etc/resolv.conf` and breaks mDNS. Always enroll with:
+
+```bash
+sudo tailscale up --accept-dns=false
+```
+
+The Tailscale IP remains stable (assigned from your tailnet). On this Pi:
+`100.117.86.4`.
+
+### Cloudflare Tunnel: use token-based (remotely managed) tunnels
+
+`cloudflared tunnel login` relies on a cert.pem callback over HTTPS. Behind
+home NAT, the callback URL is unreachable -- cloudflared times out after 8
+minutes. Do not use `cloudflared tunnel login` on field devices.
+
+**Always use the token-based approach:**
+1. Create tunnel in Zero Trust dashboard → Networks → Tunnels → Create
+2. Copy the install token from the dashboard
+3. On the Pi: `sudo cloudflared service install <TOKEN>`
+4. Configure public hostnames in the dashboard (not in a local config.yml)
+
+The tunnel pulls its ingress config from Cloudflare on startup and whenever
+you update the dashboard -- no config files on disk, no restarts needed.
+
+### Cloudflare DNS: public hostname CNAME must be Proxied
+
+When you save a public hostname in Zero Trust, Cloudflare creates a DNS record
+automatically. Verify it exists in Cloudflare DNS and is set to **Proxied**
+(orange cloud). If it shows DNS-only (grey), traffic won't route through the
+tunnel's TLS termination.
+
+If the CNAME is absent (can happen if the dashboard save failed silently), add
+it manually:
+- Type: CNAME, Name: `<subdomain>`, Target: `<tunnel-uuid>.cfargotunnel.com`
+
+### SSE requires no response buffering
+
+Cloudflare Tunnel passes SSE (`text/event-stream`) without buffering by default.
+If a proxy (nginx, etc.) sits in front of ha-core, add:
+
+```nginx
+proxy_buffering off;
+proxy_cache off;
+proxy_set_header Connection '';
+chunked_transfer_encoding on;
+```
+
+Without `proxy_buffering off`, SSE events are held until the buffer fills and
+clients see delayed or batched updates.
+
 ### Docker on Pi uses network_mode: host (not port mapping)
 
 On Linux (Pi), `network_mode: host` is correct and required for HA to discover
