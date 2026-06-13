@@ -44,6 +44,7 @@ export function createApp() {
   app.get("/", (_req, res) => res.redirect("/manage"));
 
   app.use(
+    "/api",
     createRouter({
       wsClient,
       clientConfig,
