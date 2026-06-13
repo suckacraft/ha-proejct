@@ -1,5 +1,50 @@
 # Raspberry Pi 5 Setup Guide
 
+---
+
+## Phase 0: Network + SSH
+
+Complete this phase before running the ha-core deploy pipeline. The Pi must be
+reachable by SSH from both the PC and the laptop before any automated deploy can work.
+
+### Run order
+
+| Step | Where | Command |
+|---|---|---|
+| 1 | - | Power on the Pi |
+| 2 | PC | `.\setup\00-discover-pi.ps1` |
+| 3 | PC | `.\setup\01-setup-ssh-keys.ps1` |
+| 4 | Laptop | `.\setup\01-setup-ssh-keys.ps1` |
+| 5 | Pi | `bash setup/02-harden-pi-ssh.sh` |
+| 6 | Router | Set a static DHCP lease for the Pi's MAC address |
+| 7 | - | Proceed to the ha-core deploy pipeline below |
+
+### Notes
+
+- **Step 2** (`00-discover-pi.ps1`) tries mDNS (`piserver.local`) first, then
+  falls back to an ARP sweep scanning for Raspberry Pi MAC OUIs. It polls every
+  10 seconds for up to 5 minutes. If it times out, follow the ethernet fallback
+  in `setup/PI_NETWORK_RECOVERY.md`.
+- **Steps 3 and 4** must be run on each machine independently. Each machine needs
+  its own public key in the Pi's `authorized_keys`. Pass `-PiTarget <IP>` if
+  `piserver.local` does not resolve yet.
+- **Step 5** disables password auth. Keep one SSH session open and test a second
+  before closing the first.
+- **Step 6**: when step 2 finds the Pi, it prints the MAC address. Log into the
+  router at `192.168.0.1` and bind that MAC to a fixed IP. Without this, the
+  Pi's address can change after a reboot and break the deploy scripts.
+
+### Network: subnet reference
+
+| Host | IP |
+|---|---|
+| Router | 192.168.0.1 |
+| PC (JOSH) | 192.168.0.21 |
+| Laptop (hooby) | 192.168.0.23 |
+| Pi (assign) | 192.168.0.x (set via static DHCP lease) |
+
+---
+
 This guide covers the Pi 5 in two contexts:
 
 1. DEV/POC use -- your home lab Pi used for learning and building
