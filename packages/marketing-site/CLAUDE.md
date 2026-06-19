@@ -10,8 +10,10 @@ SmartBoyz experience (homeowner app + done-for-you installation & support). Opti
 - **React islands** only where interactivity is required. Hydrate with `client:visible`, never
   `client:load`, unless above-the-fold interactivity demands it. Right now the **only** island is
   `components/react/LeadCapture.tsx`.
-- **Tailwind v4** via `@tailwindcss/vite` in `astro.config.mjs` (NOT `@astrojs/tailwind`). No
-  `tailwind.config` — tokens live in `@theme` in `src/styles/global.css`.
+- **Tailwind v4** via **PostCSS** (`@tailwindcss/postcss`, see `postcss.config.mjs`), NOT the
+  `@tailwindcss/vite` plugin (that plugin breaks on the rolldown-based Vite that Astro 6 bundles:
+  "Missing field tsconfigPaths"). No `tailwind.config` — tokens live in `@theme` in
+  `src/styles/global.css`. `overrides.vite: ^7` in package.json pins Vite to what Astro expects.
 - **MDX + sitemap** integrations enabled. Lead form is a **Cloudflare Pages Function**
   (`functions/api/lead.ts`), not an Astro route.
 - All deps **pinned exact** (root rule 6). Install per-package: `npm install --prefix packages/marketing-site`

@@ -2,6 +2,58 @@
 
 See also SESSION_STATE.md for quick-start context for new sessions.
 
+## 2026-06-13 — Marketing site (smartboyz.com) scaffolded
+
+**Status:** In progress (branch: feat/marketing-site). New package only; product
+apps, ha-core, and deploy tooling for smarthome-app untouched.
+
+**Why:** smartboyz.com (apex/www) was unused — the brand had a product and an
+installer story but no public, customer-facing landing page. Added one, leading with
+the homeowner app experience + the done-for-you installation/support service.
+
+**Decisions (with rationale):**
+- **Stack: Astro 6 static + React islands + Tailwind v4 + MDX**, deployed to a NEW
+  Cloudflare Pages project `smartboyz-www` (distinct from `smarthome-app`). Chosen via
+  deep-research for best Core Web Vitals/SEO on a content site; static output avoids the
+  SSR adapter. `output:'static'`, dev port 5175.
+- **Tailwind v4 via `@tailwindcss/postcss`** (PostCSS, see `postcss.config.mjs`), no
+  `tailwind.config`. NOT the `@tailwindcss/vite` plugin: it breaks on the rolldown-based Vite
+  that Astro 6 bundles ("Missing field tsconfigPaths"). `overrides.vite:^7` pins Vite. The
+  `@theme` token approach is the same as client-app; only the plumbing differs.
+- **Brand tokens:** surface scale (canvas/surface/raised/border) shared with
+  `client-app/src/index.css`; the **accent intentionally diverges** to electric orange
+  `#f97316` (marketing brand brief) vs client-app's blue `#2563eb`. Future: extract
+  `packages/brand/tokens.css` for the shared surfaces — deferred.
+- **Fonts self-hosted** via `@fontsource` (Barlow Condensed + DM Sans) instead of a Google
+  Fonts `<link>` — better LCP/CLS on a marketing page.
+- **Lead form** = Cloudflare Pages Function `functions/api/lead.ts` (works with static
+  output). Destination is **TBD** via `LEAD_WEBHOOK_URL` env; until set it validates +
+  accepts + logs (honest stub, no fake "connected"). Only hydrated island on the site.
+- **Claude tooling:** added root `.mcp.json` (shadcn + Playwright MCP) and a package-level
+  `CLAUDE.md`; `frontend-design` skill applied within the locked brand tokens.
+
+**Deviations from root CLAUDE.md (deliberate):**
+- Rule 14 (Docker Compose for local dev) does NOT apply — the marketing site is a
+  standalone static Astro build outside the service mesh; runs via `astro dev`.
+- npm workspace `-w` does not resolve on the `Z:` drive (ERESOLVE/"No workspaces found").
+  Per-package install via `--prefix packages/marketing-site`, matching the repo's already-
+  adapted `deploy:pages` script. Added `deploy:www` in the same `--prefix` + `npx wrangler`
+  style.
+
+**Environment note (`Z:` = `\\JOSH\smarthome`, a remote SMB share):** `npm install` over this
+share is slow (~9 min) and intermittently DROPS individual files mid-write (sharp's native
+`.node`, `yargs-parser`, Vite `dist`, MDX/markdown deps) and LOCKS dirs against rmdir
+(EPERM/EBUSY/ENOTEMPTY) — almost certainly antivirus on the host scanning share writes. Net
+effect: a reliable local `node_modules` on `Z:` is not currently achievable from this machine.
+Mitigations in place: (1) Astro image service is `passthrough` on win32, `sharp` on Linux — so
+sharp is not needed locally and Cloudflare's Linux build still optimizes images; (2) local
+verification was done by installing into a local-disk dir and building/serving there (build OK:
+3 pages, sitemap, dev server on :5175, visually verified mobile/tablet/desktop). **Deploy via
+GitHub→Cloudflare (Linux) — do NOT rely on `npm run deploy:www` from this Windows/SMB machine.**
+
+**Content:** all copy in `src/content/site.ts` is realistic placeholder with `TODO(content)`
+markers — needs real value props, pricing, testimonials, service area, and lead destination.
+
 ## 2026-06-10 - Pi deployment pipeline + franchise ops system
 
 **Status:** Complete (branch: pi-deploy-pipeline). No application logic changed.

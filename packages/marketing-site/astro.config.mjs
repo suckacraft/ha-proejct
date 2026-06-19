@@ -7,11 +7,12 @@ import {
 import react from "@astrojs/react";
 import mdx from "@astrojs/mdx";
 import sitemap from "@astrojs/sitemap";
-import tailwindcss from "@tailwindcss/vite";
 
 // SmartBoyz marketing site — static output for best Core Web Vitals / SEO.
-// Tailwind v4 is wired through the Vite plugin (same as client-app), NOT the
-// legacy @astrojs/tailwind integration. Design tokens live in src/styles/global.css.
+// Tailwind v4 is wired through PostCSS (@tailwindcss/postcss, see postcss.config.mjs),
+// NOT the @tailwindcss/vite plugin: that plugin is incompatible with the rolldown-based
+// Vite that Astro 6 bundles ("Missing field tsconfigPaths"). PostCSS is bundler-agnostic
+// and behaves identically for @theme tokens. Design tokens live in src/styles/global.css.
 export default defineConfig({
   site: "https://smartboyz.com.au",
   output: "static",
@@ -26,9 +27,6 @@ export default defineConfig({
       process.platform === "win32"
         ? passthroughImageService()
         : sharpImageService(),
-  },
-  vite: {
-    plugins: [tailwindcss()],
   },
   server: {
     // client-app = 5173, operator-app = 5174 → marketing-site = 5175
