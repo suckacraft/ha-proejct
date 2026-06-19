@@ -10,7 +10,12 @@ Target: a **second** Cloudflare Pages project named **`smartboyz-www`** (separat
 
 ## Option A — Git integration (recommended)
 
-1. **Push the branch** to GitHub (`feat/marketing-site`, then merge to `main` for production).
+> **Gotcha:** the existing `smartboyz-www` project was created by **direct upload**, and Cloudflare
+> **cannot convert a direct-upload project to Git-connected**. To get push-to-build you must create a
+> **new Git-connected project**. Cleanest: delete the direct-upload `smartboyz-www` first, then create
+> the Git-connected one with the same name so the `smartboyz-www.pages.dev` URL is preserved.
+
+1. **Push the branch** to GitHub (`feat/marketing-site`, then merge to `main` for production). *(Done: the branch is current on `suckacraft/ha-proejct`.)*
 2. Cloudflare dashboard → **Workers & Pages → Create → Pages → Connect to Git** → select this repo.
 3. **Build settings:**
    | Setting | Value |
