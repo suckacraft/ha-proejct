@@ -2,17 +2,20 @@
 
 /*
  * SmartBoyz brand tokens.
- * NOTE: the marketing site intentionally uses an electric-orange accent
- * (#f97316, per the brand brief) and DIVERGES from the client app's blue
- * (#2563eb). The surface scale (canvas/surface/raised) is still shared with
- * packages/client-app/src/index.css — keep those in sync; the accent is the
- * deliberate exception. Future: extract to packages/brand/tokens.css.
+ * Accent is a single swappable SLOT. PROVISIONAL: brass #E0A95E — the default
+ * accent in the brand strategy ("Command Center" doc), which retires the earlier
+ * saturated orange. Confirm/override from the finalized brand guidelines (teal
+ * #3FB9AE is the documented alternate). It's one line to swap.
+ * Surface scale shared with packages/client-app/src/index.css; --color-overlay
+ * is the evolved 4th elevation. Future: extract to packages/brand/tokens.css.
  */
 @theme {
-  --color-primary: #f97316;
+  --color-primary: #e0a95e; /* brass — provisional, per brand strategy */
+  --color-primary-strong: #f0be74; /* brass strong: hover/active */
   --color-canvas: #0c0e14;
   --color-surface: #161920;
   --color-raised: #1e222c;
+  --color-overlay: #262b37; /* 4th elevation: sheets / menus / overlays */
   --color-border: #252932;
   --font-display: "Barlow Condensed", condensed;
   --font-sans: "DM Sans Variable", "DM Sans", sans-serif;
@@ -25,10 +28,31 @@ html {
 html,
 body {
   background-color: #0c0e14;
+  /* Whisper-gradient: a barely-there top luminance so the flat canvas catches
+     "light" instead of reading dead-flat (brand strategy materiality move). */
+  background-image: linear-gradient(
+    to bottom,
+    rgba(255, 255, 255, 0.018),
+    transparent 22rem
+  );
+  background-attachment: fixed;
   color: white;
   font-family: "DM Sans Variable", "DM Sans", sans-serif;
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+}
+
+/* Materiality — fine grain (~3–4%) over the canvas. Kills OLED gradient banding
+   and adds organic texture; invisible as texture, felt as quality. Static (safe
+   under reduced-motion), pointer-events:none so it never blocks interaction. */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  z-index: 60;
+  pointer-events: none;
+  opacity: 0.04;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='140' height='140'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
 }
 
 /* Anchored sections clear the sticky header. */

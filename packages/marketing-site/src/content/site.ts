@@ -132,7 +132,7 @@ export const site: Site = {
     // Display type — kept short for Barlow Condensed font-black. Last line accents.
     headlineLines: ["Melbourne homes,", "made smart."],
     subhead:
-      "Next-gen smart home installs & automation solutions. One app, every device, zero headaches — built and supported by locals who actually show up.",
+      "Whole-home installs and automation, done properly. One app, every device, zero headaches — built and supported by Melbourne locals who actually show up.",
     primaryCta: { label: "Book a Free Consultation", href: "#contact" },
     secondaryCta: { label: "See the app", href: "#product" },
     // Short trust markers under the CTAs (full list lives in socialProof.trustMarkers).
@@ -259,7 +259,7 @@ export const site: Site = {
         name: "Standard",
         price: "From $6,500",
         blurb:
-          "Your whole home in sync — lighting, climate, security and more, all working together seamlessly.",
+          "Your whole home in sync — lighting, climate, security and more, all on one calm screen.",
         features: [
           "Everything in Essential",
           "Smart climate control & scheduling",
@@ -320,7 +320,7 @@ export const site: Site = {
       },
       {
         q: "How is this different from buying a Google Home or Alexa setup myself?",
-        a: "DIY platforms are fragmented — different apps, different ecosystems, limited automation. We build a unified system where everything works together, installed properly by licensed professionals, with ongoing support included. It's the difference between a collection of gadgets and a genuinely smart home.",
+        a: "DIY platforms are fragmented — different apps, different platforms, limited automation. We build a unified system where everything works together, installed properly by licensed professionals, with ongoing support included. It's the difference between a collection of gadgets and a genuinely smart home.",
       },
       {
         q: "Do you work on apartments, or just houses?",
@@ -332,7 +332,7 @@ export const site: Site = {
       },
       {
         q: "What brands and devices do you use?",
-        a: "We select components based on proven reliability — not brand deals. Common brands include Shelly, Sonoff, Aqara, and others in the Home Assistant ecosystem. Everything is tested before it goes into your home.",
+        a: "We select components based on proven reliability — not brand deals. Common brands include Shelly, Sonoff, Aqara, and others supported by Home Assistant. Everything is tested before it goes into your home.",
       },
       {
         q: "Can I control everything from my phone?",
